@@ -113,3 +113,58 @@ def normalize_data(data):
     U_star = [jnp.hstack((u_n, v_n)), h_n]
 
     return X_star, U_star, X_ct, nnct, data_info
+
+def normalize_data_simple(x_data,z_data,u_data,w_data):
+    # extract the velocity data
+    xraw = x_data   # unit [m] position
+    zraw = z_data   # unit [m] position
+    wraw = w_data  # unit [m/s] ice velocity
+
+    # flatten the velocity data into 1d array
+    x0 = xraw.flatten()
+    z0 = zraw.flatten()
+    w0 = wraw.flatten()
+
+    # remove the nan value in the velocity data
+    idxval_w = jnp.where(~np.isnan(w0))[0]
+    x = x0[idxval_w, None]
+    z = z0[idxval_w, None]
+    w = w0[idxval_w, None]
+
+    # calculate the mean and range of the domain
+    x_mean = jnp.mean(x)
+    x_range = (x.max() - x.min()) / 2
+    z_mean = jnp.mean(z)
+    z_range = (z.max() - z.min()) / 2
+
+    # calculate the mean and std of the velocity
+    w_mean = jnp.mean(w)
+    w_range = jnp.std(w) * 2
+
+    # normalize the velocity data
+    x_n = (x - x_mean) / x_range
+    z_n = (z - z_mean) / z_range
+    w_n = (w - w_mean) / w_range
+
+    # group the raw data
+    data_raw = [x0, z0, w0]
+    # group the normalized data
+    data_norm = [x_n, z_n, w_n]
+    # group the nan info of original data
+    idxval_all = [idxval_w]
+    # group the shape info of original data
+    dsize_all = [wraw.shape]
+
+    # group the mean and range info for each variable (shape = (3,))
+    data_mean = jnp.hstack([x_mean, z_mean, w_mean])
+    data_range = jnp.hstack([x_range, z_range, w_range])
+
+    # gathering all the data information
+    data_info = [data_mean, data_range, data_norm, data_raw, idxval_all, dsize_all]
+
+    # group the input and output into matrix
+    X_star = [jnp.hstack((x_n, z_n))]
+    # sequence of output matrix column is u,v,h
+    U_star = [jnp.hstack((w_n))]
+
+    return X_star, U_star, data_info
