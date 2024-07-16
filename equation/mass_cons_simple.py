@@ -45,6 +45,7 @@ def vectgrad(func, x):
 def gov_eqn(net, x, scale):
     dmean, drange = scale[0:2]
     lx0, lz0, w0 = drange[0:3]
+    wm = dmean[2:3]
     grad, sol = vectgrad(net,x)
     # assuming grad is u_x u_z w_x w_z 
     # assuming sol is u w rho_s L 
@@ -55,22 +56,22 @@ def gov_eqn(net, x, scale):
     w = sol[:,1:2]
     rho = sol[:,2:3]
 
-    eterm1 = u_x 
-    eterm2 = (lx0/lz0)*(rho*w_z + w*rho_z)
+    eterm1 = u_x * lz0/lx0
+    eterm2 = (w+wm/w0)*rho_z + rho*w_z
     e1 = eterm1 + eterm2
 
     val_term = jnp.hstack([eterm1,eterm2])
     return e1, val_term
     
 # need 2 different BC eqns
-def ubc_eqn(net,x):
-    grad, sol = vectgrad(net,x)
+def bc_div_eqn(net,x):
+    sol, vjp_fn = vjp(net, x)
     u = sol[:,0:1]
     e1 = u
     return e1
 
-def dudxbc_eqn(net,x):
-    grad, sol = vectgrad(net,x)
-    u_x = grad[:,0:1]
-    e1 = u_x
+def bc_bed_eqn(net,x):
+    sol, vjp_fn = vjp(net, x)
+    u = sol[:,0:1]
+    e1 = u
     return e1

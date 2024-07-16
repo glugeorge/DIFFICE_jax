@@ -114,7 +114,7 @@ def normalize_data(data):
 
     return X_star, U_star, X_ct, nnct, data_info
 
-def normalize_data_simple(x_data,z_data,w_data,x_ubc,z_ubc,x_dubc,z_dubc):
+def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_bed):
     # make sure the bc information is passed as a vector, not a mesh
     # extract the velocity data
     xraw = x_data   # unit [m] position
@@ -148,10 +148,10 @@ def normalize_data_simple(x_data,z_data,w_data,x_ubc,z_ubc,x_dubc,z_dubc):
     w_n = (w - w_mean) / w_range
 
     # normalize the boundary data coords
-    x_ubc_n = (x_ubc - x_mean) / x_range
-    z_ubc_n = (z_ubc - z_mean) / z_range
-    x_dubc_n = (x_dubc - x_mean) / x_range
-    z_dubc_n = (z_dubc - z_mean) / z_range
+    x_div_n = (x_bc_div - x_mean) / x_range
+    z_div_n = (z_bc_div - z_mean) / z_range
+    x_bed_n = (x_bc_bed - x_mean) / x_range
+    z_bed_n = (z_bc_bed - z_mean) / z_range
     
 
     # group the raw data
@@ -172,7 +172,7 @@ def normalize_data_simple(x_data,z_data,w_data,x_ubc,z_ubc,x_dubc,z_dubc):
 
     # group the input and output into matrix
     X_star = jnp.hstack((x_n, z_n))
-    X_bc = [jnp.hstack(x_ubc_n,z_ubc_n),jnp.hstack(x_dubc_n,z_dubc_n)]
+    X_bc = [jnp.hstack((x_div_n,z_div_n)),jnp.hstack((x_bed_n,z_bed_n))]
     # sequence of output matrix column is 
     U_star = [w_n]
 

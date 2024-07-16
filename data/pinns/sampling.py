@@ -57,8 +57,8 @@ def data_sample_create_simple(data_all, n_pt):
 
     # obtain the number of data points and points at the boundary
     n_data = X_star.shape[0]
-    n_bc_u = X_bc[0].shape[0]
-    n_bc_dudx = X_bc[1].shape[0]
+    n_bc_div = X_bc[0].shape[0]
+    n_bc_bed = X_bc[1].shape[0]
 
     # define the function that can re-sampling for each calling
     def dataf(key):
@@ -75,14 +75,14 @@ def data_sample_create_simple(data_all, n_pt):
         # sampling the data point based on the index
         X_col = X_star[0][idx_col]
 
-        # generate a random index of the data at divide
-        idx_bc_u = random.choice(keys[2], jnp.arange(n_bc_u), [n_pt[2]])
-        idx_bc_dudx = random.choice(keys[3], jnp.arange(n_bc_dudx), [n_pt[3]])
+        # generate a random index of the data at divide and bed
+        idx_bc_div = random.choice(keys[2], jnp.arange(n_bc_div), [n_pt[2]])
+        idx_bc_bed = random.choice(keys[3], jnp.arange(n_bc_bed), [n_pt[3]])
         # sampling the data point based on the index
-        X_bc_u = X_bc[0][idx_bc_u]
-        X_bc_dudx = X_bc[1][idx_bc_dudx]
+        X_bc_div = X_bc[0][idx_bc_div]
+        X_bc_bed = X_bc[1][idx_bc_bed]
 
         # group all the data and collocation points
-        data = dict(smp=[X_smp, U_smp], col=[X_col],  bd1=[X_bc_u], bd2 = [X_bc_dudx])
+        data = dict(smp=[X_smp, U_smp], col=[X_col],  bd1=[X_bc_div], bd2 = [X_bc_bed])
         return data
     return dataf
