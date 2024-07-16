@@ -43,8 +43,34 @@ def vectgrad(func, x):
     return grad_all, sol
 
 def gov_eqn(net, x, scale):
-    rho_i = 917
-    rho_s = 600
-    L = 400
+    dmean, drange = scale[0:2]
+    lx0, lz0, w0 = drange[0:3]
+    grad, sol = vectgrad(net,x)
+    # assuming grad is u_x u_z w_x w_z 
+    # assuming sol is u w rho_s L 
+
+    u_x = grad[:,0:1]
+    w_z = grad[:,3:4]
+    rho_z = grad[:,5:6]
+    w = sol[:,1:2]
+    rho = sol[:,2:3]
+
+    eterm1 = u_x 
+    eterm2 = (lx0/lz0)*(rho*w_z + w*rho_z)
+    e1 = eterm1 + eterm2
+
+    val_term = jnp.hstack([eterm1,eterm2])
+    return e1, val_term
     
-    
+# need 2 different BC eqns
+def ubc_eqn(net,x):
+    grad, sol = vectgrad(net,x)
+    u = sol[:,0:1]
+    e1 = u
+    return e1
+
+def dudxbc_eqn(net,x):
+    grad, sol = vectgrad(net,x)
+    u_x = grad[:,0:1]
+    e1 = u_x
+    return e1

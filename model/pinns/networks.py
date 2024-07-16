@@ -37,3 +37,30 @@ def solu_create(scl=1, act_s=0):
         sol = jnp.hstack([uvh, jnp.exp(mu)])
         return sol
     return f
+
+def solu_create_simple(scale,scl=1, act_s=0):
+    '''
+    :param scale: normalization info
+    :return: function of the solution (a callable)
+    '''
+    dmean, drange = scale[0:2]
+    x_m = dmean[0]
+    x_scale = drange[0]
+    z_m = dmean[1]
+    z_scale = drange[1]
+
+    def thickness(x):
+        h = -((x+x_m)*x_scale)**2 + 1000   # normalized based on data normalization
+        return h
+    
+    rho_i = 917     # remember x is normalized
+    def f(params, x):
+        x0, z0 = jnp.split(x, 2, axis=1)
+        H = thickness(x0)
+        pm_rho = params[1]
+        # generate the NN
+        uw = neural_net(params[0], x, scl, act_s)
+        rhoL = 1 + (pm_rho[0]/rho_i - 1) * jnp.exp((-H+(z0+z_m)*z_scale)/pm_rho[1])
+        sol = jnp.hstack([uw, rhoL])
+        return sol
+    return f

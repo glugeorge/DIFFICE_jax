@@ -46,3 +46,43 @@ def data_sample_create(data_all, n_pt):
         return data
     return dataf
 
+
+def data_sample_create_simple(data_all, n_pt):
+    # load the data within ice
+    X_star = data_all[0]
+    U_star = data_all[1]
+    
+    # load the data at the boundaries
+    X_bc = data_all[2]
+
+    # obtain the number of data points and points at the boundary
+    n_data = X_star.shape[0]
+    n_bc_u = X_bc[0].shape[0]
+    n_bc_dudx = X_bc[1].shape[0]
+
+    # define the function that can re-sampling for each calling
+    def dataf(key):
+        # generate the new random key
+        keys = random.split(key, 4) 
+
+        # sampling the velocity data point based on the index
+        idx_smp = random.choice(keys[0], jnp.arange(n_data), [n_pt[0]])
+        X_smp = X_star[0][idx_smp]
+        U_smp = U_star[0][idx_smp]
+
+        # generate a random sample of collocation point within the domain
+        idx_col = random.choice(keys[1], jnp.arange(n_data), [n_pt[1]])
+        # sampling the data point based on the index
+        X_col = X_star[0][idx_col]
+
+        # generate a random index of the data at divide
+        idx_bc_u = random.choice(keys[2], jnp.arange(n_bc_u), [n_pt[2]])
+        idx_bc_dudx = random.choice(keys[3], jnp.arange(n_bc_dudx), [n_pt[3]])
+        # sampling the data point based on the index
+        X_bc_u = X_bc[0][idx_bc_u]
+        X_bc_dudx = X_bc[1][idx_bc_dudx]
+
+        # group all the data and collocation points
+        data = dict(smp=[X_smp, U_smp], col=[X_col],  bd1=[X_bc_u], bd2 = [X_bc_dudx])
+        return data
+    return dataf

@@ -40,3 +40,20 @@ def init_pinns(parent_key, n_hl, n_unit, aniso=False):
     params_u = init_single_net(keys[0], layers1)
     params_mu = init_single_net(keys[0], layers2)
     return [params_u, params_mu]
+
+def init_pinns_simple(parent_key, n_hl, n_unit):
+    '''
+    :param n_hl: number of hidden layers [int]
+    :param n_unit: number of units in each layer [int]
+    '''
+
+    # set the neural network shape for u, w
+    layers1 = [2] + n_hl * [n_unit] + [2] # since only outputting u,w for x,z
+
+    # generate the random key for each network
+    keys = random.split(parent_key, 2)
+    # generate weights and biases for
+    params_u = init_single_net(keys[0], layers1)
+    params_rhoL = random.truncated_normal(keys[1], -2, 2, shape=(2,))
+
+    return [params_u, params_rhoL]

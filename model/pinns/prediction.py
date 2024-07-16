@@ -129,3 +129,4 @@ def predict(func_all, data_all, aniso=False):
         results['eta'] = eta_p
 
     return results
+
