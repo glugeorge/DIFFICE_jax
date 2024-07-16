@@ -162,10 +162,10 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         u_smp = data['smp'][1]
 
         # load the position and weight of collocation points
-        x_col = data['col'][0]
+        x_col = data['col']
 
-        x_bd1 = data['bd1'][0]
-        x_bd2 = data['bd2'][0]
+        x_bd1 = data['bd1']
+        x_bd2 = data['bd2']
 
         # calculate the gradient of phi at origin
         u_pred = net(x_smp)[:, 1:2] # not 0:2 because we only have data in w

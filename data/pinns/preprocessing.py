@@ -159,9 +159,9 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     # group the normalized data
     data_norm = [x_n, z_n, w_n]
     # group the nan info of original data
-    idxval_all = [idxval_w]
+    idxval_all = idxval_w
     # group the shape info of original data
-    dsize_all = [wraw.shape]
+    dsize_all = wraw.shape
 
     # group the mean and range info for each variable (shape = (3,))
     data_mean = jnp.hstack([x_mean, z_mean, w_mean])

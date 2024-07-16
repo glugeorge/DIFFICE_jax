@@ -144,9 +144,9 @@ def predict_masscon(func_all,data_all):
     # set the output position based on the original velocity data
     x_pred = jnp.hstack([x_star, z_star])
     # obtain the non-nan index of the original dataset
-    idxval = data_all[4][-2]
+    idxval = data_all[3][-2]
     # obtain the 2D shape of the original dataset
-    dsize = data_all[4][-1]
+    dsize = data_all[3][-1]
     # extract the scale for different variables
     scale = data_all[3][0:2]
     varscl = extract_scale_simple(scale)
@@ -185,8 +185,8 @@ def predict_masscon(func_all,data_all):
     rho = dataArrange(uw_rho[:, 2:3], idxval, dsize) * varscl['rho0'] 
 
     # convert to 2D derivative of prediction
-    ux_p = dataArrange(duw_rho[:, 0:1], idxval, dsize) * varscl['u0']/varscl['lx0']
-    uz_p = dataArrange(duw_rho[:, 1:2], idxval, dsize) * varscl['u0']/varscl['lz0']
+    ux_p = dataArrange(duw_rho[:, 0:1], idxval, dsize) * varscl['w0']/varscl['lx0']
+    uz_p = dataArrange(duw_rho[:, 1:2], idxval, dsize) * varscl['w0']/varscl['lz0']
     wx_p = dataArrange(duw_rho[:, 2:3], idxval, dsize) * varscl['w0']/varscl['lx0']
     wz_p = dataArrange(duw_rho[:, 3:4], idxval, dsize) * varscl['w0']/varscl['lz0']
     rhox_p = dataArrange(duw_rho[:, 4:5], idxval, dsize) * varscl['rho0']/varscl['lx0']

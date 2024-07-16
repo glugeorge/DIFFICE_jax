@@ -54,7 +54,7 @@ def data_sample_create_simple(data_all, n_pt):
     
     # load the data at the boundaries
     X_bc = data_all[2]
-
+    
     # obtain the number of data points and points at the boundary
     n_data = X_star.shape[0]
     n_bc_div = X_bc[0].shape[0]
@@ -67,13 +67,13 @@ def data_sample_create_simple(data_all, n_pt):
 
         # sampling the velocity data point based on the index
         idx_smp = random.choice(keys[0], jnp.arange(n_data), [n_pt[0]])
-        X_smp = X_star[0][idx_smp]
+        X_smp = X_star[idx_smp]
         U_smp = U_star[0][idx_smp]
-
+        
         # generate a random sample of collocation point within the domain
         idx_col = random.choice(keys[1], jnp.arange(n_data), [n_pt[1]])
         # sampling the data point based on the index
-        X_col = X_star[0][idx_col]
+        X_col = X_star[idx_col]
 
         # generate a random index of the data at divide and bed
         idx_bc_div = random.choice(keys[2], jnp.arange(n_bc_div), [n_pt[2]])
@@ -83,6 +83,6 @@ def data_sample_create_simple(data_all, n_pt):
         X_bc_bed = X_bc[1][idx_bc_bed]
 
         # group all the data and collocation points
-        data = dict(smp=[X_smp, U_smp], col=[X_col],  bd1=[X_bc_div], bd2 = [X_bc_bed])
+        data = dict(smp=[X_smp, U_smp], col=X_col,  bd1=X_bc_div, bd2 = X_bc_bed)
         return data
     return dataf
