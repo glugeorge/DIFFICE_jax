@@ -50,18 +50,17 @@ def solu_create_simple(scale,scl=1, act_s=0):
     z_scale = drange[1]
 
     def thickness(x):
-        h = -((x+x_m)*x_scale)**2/2000 + 1000   
+        h = -(x*x_scale + x_m)**2/2000 + 1000   
         h_nondim = (h-z_m)/z_scale # divide by zscale
         return h_nondim
     
-    rho_i = 917     # remember x is normalized
     def f(params, x):
         x0, z0 = jnp.split(x, 2, axis=1)
         H = thickness(x0)
         pm_rho = params[1]
         # generate the NN
         uw = neural_net(params[0], x, scl, act_s)
-        rhoL = 1 + (pm_rho[0] - 1) * jnp.exp((-H+z0)/pm_rho[1])
+        rhoL = 1 + (jnp.exp(pm_rho[0]) - 1) * jnp.exp((-H+z0)/jnp.exp(pm_rho[1]))
         sol = jnp.hstack([uw, rhoL])
         return sol
     return f

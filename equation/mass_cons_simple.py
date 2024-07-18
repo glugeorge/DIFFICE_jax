@@ -47,8 +47,6 @@ def gov_eqn(net, x, scale):
     lx0, lz0, w0 = drange[0:3]
     wm = dmean[2:3]
     grad, sol = vectgrad(net,x)
-    # assuming grad is u_x u_z w_x w_z 
-    # assuming sol is u w rho_s L 
 
     u_x = grad[:,0:1]
     w_z = grad[:,3:4]
@@ -72,6 +70,9 @@ def bc_div_eqn(net,x):
 
 def bc_bed_eqn(net,x):
     sol, vjp_fn = vjp(net, x)
-    u = sol[:,0:1]
-    e1 = u
+    #u = sol[:,0:1]
+    #e1 = u
+    # Enforcing BC on rho
+    rho = sol[:,2:3]
+    e1 = rho - 1 
     return e1
