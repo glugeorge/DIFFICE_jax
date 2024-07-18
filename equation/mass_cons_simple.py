@@ -68,11 +68,11 @@ def bc_div_eqn(net,x):
     e1 = u
     return e1
 
-def bc_bed_eqn(net,x):
+def bc_bed_eqn(net,x,us):
     sol, vjp_fn = vjp(net, x)
-    #u = sol[:,0:1]
-    #e1 = u
+    u = sol[:,0:1]
+    e1 = u
     # Enforcing BC on rho
-    rho = sol[:,2:3]
-    e1 = rho - 1 
+    #rho = sol[:,2:3]
+    #e1 = rho - 1 
     return e1

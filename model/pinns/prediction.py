@@ -140,15 +140,15 @@ def extract_scale_simple(scale_info):
 
 def predict_masscon(func_all,data_all):
     # obtain the normalized dataset
-    x_star, z_star, w_star = data_all[3][2]
+    x_star, z_star, w_star = data_all[4][2]
     # set the output position based on the original velocity data
     x_pred = jnp.hstack([x_star, z_star])
     # obtain the non-nan index of the original dataset
-    idxval = data_all[3][-2]
+    idxval = data_all[4][-2]
     # obtain the 2D shape of the original dataset
-    dsize = data_all[3][-1]
+    dsize = data_all[4][-1]
     # extract the scale for different variables
-    scale = data_all[3][0:2]
+    scale = data_all[4][0:2]
     varscl = extract_scale_simple(scale)
 
     # extract the function of solution and equation residue

@@ -54,7 +54,8 @@ def data_sample_create_simple(data_all, n_pt):
     
     # load the data at the boundaries
     X_bc = data_all[2]
-    
+    U_surf = data_all[3]
+
     # obtain the number of data points and points at the boundary
     n_data = X_star.shape[0]
     n_bc_div = X_bc[0].shape[0]
@@ -81,8 +82,9 @@ def data_sample_create_simple(data_all, n_pt):
         # sampling the data point based on the index
         X_bc_div = X_bc[0][idx_bc_div]
         X_bc_bed = X_bc[1][idx_bc_bed]
+        U_bd = U_surf[idx_bc_bed]
 
         # group all the data and collocation points
-        data = dict(smp=[X_smp, U_smp], col=X_col,  bd1=X_bc_div, bd2 = X_bc_bed)
+        data = dict(smp=[X_smp, U_smp], col=X_col,  bd1=X_bc_div, bd2 = X_bc_bed, bd_data = U_bd)
         return data
     return dataf

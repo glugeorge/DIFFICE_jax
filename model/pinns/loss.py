@@ -166,6 +166,7 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
 
         x_bd1 = data['bd1']
         x_bd2 = data['bd2']
+        bd_data = data['bd_data']
 
         # calculate the gradient of phi at origin
         u_pred = net(x_smp)[:, 1:2] # not 0:2 because we only have data in w
@@ -181,7 +182,7 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         # calculate the mean squared root error of equation
         eqn_err = ms_error(f_pred)
         bd1_err = ms_error(f_bd1)
-        bd2_err = ms_error(f_bd2)
+        bd2_err = ms_error(f_bd2-bd_data)
 
         # set weights for boundary conditions
         bd_weight = [1,1]

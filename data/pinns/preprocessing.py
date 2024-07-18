@@ -114,7 +114,7 @@ def normalize_data(data):
 
     return X_star, U_star, X_ct, nnct, data_info
 
-def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_bed):
+def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_bed,u_surf):
     # make sure the bc information is passed as a vector, not a mesh
     # extract the velocity data
     xraw = x_data   # unit [m] position
@@ -153,6 +153,8 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     x_bed_n = (x_bc_bed - x_mean) / x_range
     z_bed_n = (z_bc_bed - z_mean) / z_range
     
+    # normalize the surface velocities using w_range
+    u_surf_n = u_surf / w_range
 
     # group the raw data
     data_raw = [x0, z0, w0]
@@ -176,4 +178,4 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     # sequence of output matrix column is 
     U_star = [w_n]
 
-    return X_star, U_star, X_bc, data_info
+    return X_star, U_star, X_bc, u_surf_n, data_info
