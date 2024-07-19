@@ -114,7 +114,7 @@ def normalize_data(data):
 
     return X_star, U_star, X_ct, nnct, data_info
 
-def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_bed,u_surf):
+def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_surf,z_bc_surf,u_surf):
     # make sure the bc information is passed as a vector, not a mesh
     # extract the velocity data
     xraw = x_data   # unit [m] position
@@ -150,8 +150,8 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     # normalize the boundary data coords
     x_div_n = (x_bc_div - x_mean) / x_range
     z_div_n = (z_bc_div - z_mean) / z_range
-    x_bed_n = (x_bc_bed - x_mean) / x_range
-    z_bed_n = (z_bc_bed - z_mean) / z_range
+    x_surf_n = (x_bc_surf - x_mean) / x_range
+    z_surf_n = (z_bc_surf - z_mean) / z_range
     
     # normalize the surface velocities using w_range
     u_surf_n = u_surf / w_range
@@ -174,7 +174,7 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
 
     # group the input and output into matrix
     X_star = jnp.hstack((x_n, z_n))
-    X_bc = [jnp.hstack((x_div_n,z_div_n)),jnp.hstack((x_bed_n,z_bed_n))]
+    X_bc = [jnp.hstack((x_div_n,z_div_n)),jnp.hstack((x_surf_n,z_surf_n))]
     # sequence of output matrix column is 
     U_star = [w_n]
 

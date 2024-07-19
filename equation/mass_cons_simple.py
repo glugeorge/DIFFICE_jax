@@ -68,7 +68,7 @@ def bc_div_eqn(net,x):
     e1 = u
     return e1
 
-def bc_bed_eqn(net,x,us):
+def bc_surf_eqn(net,x):
     sol, vjp_fn = vjp(net, x)
     u = sol[:,0:1]
     e1 = u

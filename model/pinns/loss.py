@@ -151,7 +151,7 @@ def loss_aniso_create(predf, eqn_all, scale, lw):
 def loss_masscon_create(predf, eqn_all, scale, lw):
 
     # separate the governing equation and boundary conditions
-    gov_eqn, bc_div_eqn, bc_bed_eqn = eqn_all
+    gov_eqn, bc_div_eqn, bc_surf_eqn = eqn_all
 
     # loss function used for the PINN training
     def loss_fun(params, data):
@@ -174,7 +174,7 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
         f_bd1 = bc_div_eqn(net, x_bd1)
-        f_bd2 = bc_bed_eqn(net, x_bd2)
+        f_bd2 = bc_surf_eqn(net, x_bd2)
 
         # calculate the mean squared root error of normalization cond.
         data_err = ms_error(u_pred - u_smp)
