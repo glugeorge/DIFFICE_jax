@@ -176,7 +176,7 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         f_pred, term = gov_eqn(net, x_col, scale)
         f_div = bc_div_eqn(net, x_div)
         f_bed = bc_bed_eqn(net, x_bed)
-        f_surf = bc_bed_eqn(net, x_surf)
+        f_surf = bc_surf_eqn(net, x_surf)
 
         # calculate the mean squared root error of normalization cond.
         data_err = ms_error(u_pred - u_smp)
