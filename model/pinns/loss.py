@@ -151,7 +151,7 @@ def loss_aniso_create(predf, eqn_all, scale, lw):
 def loss_masscon_create(predf, eqn_all, scale, lw):
 
     # separate the governing equation and boundary conditions
-    gov_eqn, bc_div_eqn, bc_surf_eqn = eqn_all
+    gov_eqn, bc_div_eqn, bc_bed_eqn, bc_surf_eqn = eqn_all
 
     # loss function used for the PINN training
     def loss_fun(params, data):
@@ -164,34 +164,37 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         # load the position and weight of collocation points
         x_col = data['col']
 
-        x_bd1 = data['bd1']
-        x_bd2 = data['bd2']
-        bd_data = data['bd_data']
+        x_div = data['bc_div']
+        x_bed = data['bc_bed']
+        x_surf = data['bc_surf']
+        u_surf = data['u_surf']
 
         # calculate the gradient of phi at origin
         u_pred = net(x_smp)[:, 1:2] # not 0:2 because we only have data in w
 
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
-        f_bd1 = bc_div_eqn(net, x_bd1)
-        f_bd2 = bc_surf_eqn(net, x_bd2)
+        f_div = bc_div_eqn(net, x_div)
+        f_bed = bc_bed_eqn(net, x_bed)
+        f_surf = bc_bed_eqn(net, x_surf)
 
         # calculate the mean squared root error of normalization cond.
         data_err = ms_error(u_pred - u_smp)
 
         # calculate the mean squared root error of equation
         eqn_err = ms_error(f_pred)
-        bd1_err = ms_error(f_bd1)
-        bd2_err = ms_error(f_bd2-bd_data)
+        div_err = ms_error(f_div)
+        bed_err = ms_error(f_bed)
+        surf_err = ms_error(f_surf-u_surf)
 
         # set weights for boundary conditions
-        bd_weight = [1,1]
+        bd_weight = [1,1,1]
 
         # all errors should be 1d arrays
         # calculate the overall data loss and equation loss
         loss_data = jnp.sum(data_err )
         loss_eqn = jnp.sum(eqn_err)
-        loss_bd = jnp.sum(bd1_err*bd_weight[0]) + jnp.sum(bd2_err*bd_weight[1])
+        loss_bd = jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) + jnp.sum(surf_err*bd_weight[2])
 
         loss_ref = loss_fun.lref
         # calculate total loss
@@ -201,7 +204,7 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         
         # group the loss of all conditions and equations
         loss_info = jnp.hstack([jnp.array([loss, loss_data, loss_eqn, loss_bd]),
-                                data_err, eqn_err, bd1_err, bd2_err])
+                                data_err, eqn_err, div_err, bed_err, surf_err])
         return loss, loss_info
 
     loss_fun.lref = 1.0
