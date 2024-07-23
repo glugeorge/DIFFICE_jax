@@ -126,6 +126,10 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     z0 = zraw.flatten()
     w0 = wraw.flatten()
 
+    x0_surf = x_bc_surf.flatten()
+    z0_surf = z_bc_surf.flatten()
+    u0 = u_surf.flatten()
+
     x0_bed = x_bc_bed.flatten()
     z0_bed = z_bc_bed.flatten()
 
@@ -153,13 +157,13 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     # normalize the boundary data coords
     x_div_n = (x_bc_div - x_mean) / x_range
     z_div_n = (z_bc_div - z_mean) / z_range
-    x_surf_n = (x_bc_surf - x_mean) / x_range
-    z_surf_n = (z_bc_surf - z_mean) / z_range
+    x_surf_n = (x0_surf.reshape((len(x0_surf),1)) - x_mean) / x_range
+    z_surf_n = (z0_surf.reshape((len(z0_surf),1)) - z_mean) / z_range
     x_bed_n = (x0_bed.reshape((len(x0_bed),1)) - x_mean) / x_range
     z_bed_n = (z0_bed.reshape((len(z0_bed),1)) - z_mean) / z_range
     
     # normalize the surface velocities using w_range
-    u_surf_n = u_surf / w_range
+    u_surf_n = u0.reshape((len(u0),1)) / w_range
 
     # group the raw data
     data_raw = [x0, z0, w0]
