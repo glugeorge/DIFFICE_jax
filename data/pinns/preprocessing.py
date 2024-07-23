@@ -139,6 +139,11 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     z = z0[idxval_w, None]
     w = w0[idxval_w, None]
 
+    idxval_u = jnp.where(~np.isnan(u0))[0]
+    x_surf = x0_surf[idxval_u, None]
+    z_surf = z0_surf[idxval_u, None]
+    u = u0[idxval_u, None]
+
     # calculate the mean and range of the domain
     x_mean = jnp.mean(x)
     x_range = (x.max() - x.min()) / 2
@@ -157,13 +162,13 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     # normalize the boundary data coords
     x_div_n = (x_bc_div - x_mean) / x_range
     z_div_n = (z_bc_div - z_mean) / z_range
-    x_surf_n = (x0_surf.reshape((len(x0_surf),1)) - x_mean) / x_range
-    z_surf_n = (z0_surf.reshape((len(z0_surf),1)) - z_mean) / z_range
+    x_surf_n = (x_surf - x_mean) / x_range
+    z_surf_n = (z_surf - z_mean) / z_range
     x_bed_n = (x0_bed.reshape((len(x0_bed),1)) - x_mean) / x_range
     z_bed_n = (z0_bed.reshape((len(z0_bed),1)) - z_mean) / z_range
     
     # normalize the surface velocities using w_range
-    u_surf_n = u0.reshape((len(u0),1)) / w_range
+    u_surf_n = u / w_range
 
     # group the raw data
     data_raw = [x0, z0, w0]
