@@ -50,7 +50,7 @@ def solu_create_simple(scale,scl=1, act_s=0):
     z_scale = drange[1]
 
     def thickness(x):
-        h = -(x*x_scale + x_m)**2/10000 + 1000   
+        h = -(x*x_scale + x_m)**2/50000 + 1000   
         h_nondim = (h-z_m)/z_scale # divide by zscale
         return h_nondim
     
