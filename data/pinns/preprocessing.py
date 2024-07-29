@@ -193,3 +193,23 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     U_star = [w_n]
 
     return X_star, U_star, X_bc, u_surf_n, data_info
+
+def normalize_data_masscon_real(x_grid,z_grid,zeta_i_grid,w_i_grid,x_bed,z_bed,x_surf,z_surf,u_surf):
+    # make sure the bc information is passed as a vector, not a mesh
+    # extract the velocity data
+    xraw = x_grid   # unit [m] position
+    zraw = z_grid
+    zeta_raw = zeta_i_grid   # unit [m] position
+    wraw = w_i_grid  # unit [m/s] ice velocity
+
+    # flatten the velocity data into 1d array
+    x0 = xraw.flatten()
+    z0 = zraw.flatten()
+    w0 = wraw.flatten()
+
+    x0_surf = x_bc_surf.flatten()
+    z0_surf = z_bc_surf.flatten()
+    u0 = u_surf.flatten()
+
+    x0_bed = x_bc_bed.flatten()
+    z0_bed = z_bc_bed.flatten()

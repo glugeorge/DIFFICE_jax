@@ -82,10 +82,10 @@ def data_sample_create_simple(data_all, n_pt):
         idx_bc_bed = random.choice(keys[3], jnp.arange(n_bc_bed), [n_pt[3]])
         idx_bc_surf = random.choice(keys[4], jnp.arange(n_bc_surf), [n_pt[4]])
         # sampling the data point based on the index
-        X_bc_div = X_bc[0][idx_bc_div]
-        X_bc_bed = X_bc[1][idx_bc_bed]
-        X_bc_surf = X_bc[2][idx_bc_surf]
-        U_bd = U_surf[idx_bc_surf]
+        X_bc_div = X_bc[0]#[idx_bc_div]
+        X_bc_bed = X_bc[1]#[idx_bc_bed]
+        X_bc_surf = X_bc[2]#[idx_bc_surf]
+        U_bd = U_surf#[idx_bc_surf]
 
         # group all the data and collocation points
         data = dict(smp=[X_smp, U_smp], col=X_col,  bc_div=X_bc_div, bc_bed=X_bc_bed, bc_surf=X_bc_surf, u_surf=U_bd)

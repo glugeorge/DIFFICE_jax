@@ -134,7 +134,7 @@ def extract_scale_simple(scale_info):
     dmean, drange = scale_info
     lx0, lz0, w0 = drange[0:3]
     lxm, lzm, wm = dmean[0:3]
-    rho0 = 917
+    rho0 = 918
     scale = dict(lx0=lx0,lz0=lz0,w0=w0,lxm=lxm,lzm=lzm,wm=wm,rho0=rho0)
     return scale
 

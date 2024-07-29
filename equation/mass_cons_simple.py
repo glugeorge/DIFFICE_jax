@@ -77,10 +77,13 @@ def bc_surf_eqn(net,x):
     #e1 = rho - 1 
     return e1
 
-def bc_bed_eqn(net,x):
+def bc_bed_eqn(net,x,scale):
+    dmean, drange = scale[0:2]
+    lx0, lz0, w0 = drange[0:3]
+    wm = dmean[2:3]
     sol, vjp_fn = vjp(net, x)
-    u = sol[:,0:1]
-    e1 = u
+    e1 = sol[:,1:2]*w0+wm # w
     rho = sol[:,2:3]
     e2 = rho - 1 
-    return jnp.hstack([e1, e2])
+
+    return jnp.hstack([10*e1,e2])

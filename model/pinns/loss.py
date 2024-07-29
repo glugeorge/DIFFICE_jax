@@ -175,7 +175,7 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
         f_div = bc_div_eqn(net, x_div)
-        f_bed = bc_bed_eqn(net, x_bed)
+        f_bed = bc_bed_eqn(net, x_bed, scale)
         f_surf = bc_surf_eqn(net, x_surf)
 
         # calculate the mean squared root error of normalization cond.
@@ -188,7 +188,87 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         surf_err = ms_error(f_surf-u_surf)
 
         # set weights for boundary conditions
-        bd_weight = [1,1,1]
+        bd_weight = [1,0.1,10]
+
+        # all errors should be 1d arrays
+        # calculate the overall data loss and equation loss
+        loss_data = jnp.sum(data_err )
+        loss_eqn = jnp.sum(eqn_err)
+        loss_bd = jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) + jnp.sum(surf_err*bd_weight[2])
+
+        loss_ref = loss_fun.lref
+        # calculate total loss
+
+        # lw should have 3 weights
+        loss = (loss_data + lw[0]*loss_eqn + lw[1]*loss_bd ) / loss_ref
+        
+        # group the loss of all conditions and equations
+        loss_info = jnp.hstack([jnp.array([loss, loss_data, loss_eqn, loss_bd]),
+                                data_err, eqn_err, div_err, bed_err, surf_err])
+        return loss, loss_info
+
+    loss_fun.lref = 1.0
+    return loss_fun
+
+def loss_masscon_realdata_create(predf, eqn_all, scale, lw):
+    # separate the governing equation and boundary conditions
+    gov_eqn, bc_div_eqn, bc_bed_eqn, bc_surf_eqn = eqn_all
+    
+    # define function for n    
+    def n_from_rho(rho):
+        return 1 + (1.78-1)*rho/918 # n_i = 1.78
+    
+    # define function for apparent ice velocity
+    def w_i_from_w(w,n):
+        return (n/1.78)*w
+        
+    # define conversion from zeta to zeta_i
+    def zeta_i_from_zeta(zeta,n):
+        c = 3e8
+        X = 7
+        tau0 = (2/c)*0 # some integral function
+        D1 = 0 
+        D2 = 0
+        #T = tau0 - (2/c)*jnp. 
+
+        return
+
+    # loss function used for the PINN training
+    def loss_fun(params, data): # !!! include w_i, zeta_i data in the dictionary
+        # create the function for gradient calculation involves input Z only
+        net = lambda z: predf(params, z)
+        # load the velocity data and their position
+        x_smp = data['smp'][0]
+        u_smp = data['smp'][1]
+
+        # load the position and weight of collocation points
+        x_col = data['col']
+
+        x_div = data['bc_div']
+        x_bed = data['bc_bed']
+        x_surf = data['bc_surf']
+        u_surf = data['u_surf']
+
+        # calculate the gradient of phi at origin
+        u_pred = net(x_smp)[:, 1:2] # not 0:2 because we only have data in w
+
+        # calculate the residue of equation
+        f_pred, term = gov_eqn(net, x_col, scale)
+        f_div = bc_div_eqn(net, x_div)
+        f_bed = bc_bed_eqn(net, x_bed, scale)
+        f_surf = bc_surf_eqn(net, x_surf)
+
+        # calculate the mean squared root error of normalization cond.
+        data_err = ms_error(u_pred - u_smp)
+
+        # calculate the mean squared root error of equation
+        eqn_err = ms_error(f_pred)
+        div_err = ms_error(f_div)
+        bed_err = ms_error(f_bed)
+        surf_err = ms_error(f_surf-u_surf)
+
+        # set weights for boundary conditions
+        bd_weight = [1,0.1,10]
 
         # all errors should be 1d arrays
         # calculate the overall data loss and equation loss
