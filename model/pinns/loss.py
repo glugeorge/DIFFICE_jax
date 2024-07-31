@@ -218,28 +218,50 @@ def loss_masscon_realdata_create(predf, eqn_all, scale, lw):
     def n_from_rho(rho):
         return 1 + (1.78-1)*rho/918 # n_i = 1.78
     
-    # define function for apparent ice velocity
-    def w_i_from_w(w,n):
-        return (n/1.78)*w
-        
-    # define conversion from zeta to zeta_i
-    def zeta_i_from_zeta(zeta,n):
+    # define function for apparent ice velocity and zeta to zeta_i
+    def wzeta_i_from_wzeta(zeta,w,n):
         c = 3e8
         X = 7
+        ni = 1.78
+        # need to unflatten then flatten n again
         tau0 = (2/c)*0 # some integral function
         D1 = 0 
         D2 = 0
-        #T = tau0 - (2/c)*jnp. 
+        T = tau0 - (2/c)*D1**2/D2 + (2/c)*jnp.sqrt(D1**4/D2**2 + (X**2/4)*D1/D2)
+        zeta_i = T*c/(2*ni)
+        w_i = (n/1.78)*w
+        return zeta_i, w_i
+    
+    def data_error(surface,x_smp,obs,pred):
+        w_pred = pred[:, 1:2]
+        rho_pred = pred[:, 2:3]
 
-        return
+        x0,z0 = jnp.split(x_smp,2,axis=1)
+        x_surf,z_surf = jnp.split(surface,2,axis=1)
+
+        z_surf_interp = jnp.interp(x0,x_surf,z_surf) # rethink this 
+        zeta = z_surf_interp-z0
+
+        x_obs,zeta_i_obs = jnp.split(obs[0],2,axis=1) # x should be scaled, z should not be
+        w_i_obs = obs[1]
+        n = n_from_rho(rho_pred)
+
+        zeta_i, w_i = wzeta_i_from_wzeta(zeta,w_pred,n)
+
+        w_i_obs_interp = jnp.interp() # some kind of interpolation here
+
+        return ms_error(w_i - w_i_obs_interp)
+        
+    
 
     # loss function used for the PINN training
     def loss_fun(params, data): # !!! include w_i, zeta_i data in the dictionary
         # create the function for gradient calculation involves input Z only
         net = lambda z: predf(params, z)
         # load the velocity data and their position
-        x_smp = data['smp'][0]
-        u_smp = data['smp'][1]
+        x_smp = data['smp'] # in the sample, only include grid, no u
+
+        obs = data['obs']
 
         # load the position and weight of collocation points
         x_col = data['col']
@@ -250,7 +272,7 @@ def loss_masscon_realdata_create(predf, eqn_all, scale, lw):
         u_surf = data['u_surf']
 
         # calculate the gradient of phi at origin
-        u_pred = net(x_smp)[:, 1:2] # not 0:2 because we only have data in w
+        pred = net(x_smp) # not 0:2 because we only have data in w
 
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
@@ -259,7 +281,7 @@ def loss_masscon_realdata_create(predf, eqn_all, scale, lw):
         f_surf = bc_surf_eqn(net, x_surf)
 
         # calculate the mean squared root error of normalization cond.
-        data_err = ms_error(u_pred - u_smp)
+        data_err = data_error(x_surf,x_smp,obs,pred)
 
         # calculate the mean squared root error of equation
         eqn_err = ms_error(f_pred)

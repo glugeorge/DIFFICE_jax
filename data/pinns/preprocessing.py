@@ -114,24 +114,33 @@ def normalize_data(data):
 
     return X_star, U_star, X_ct, nnct, data_info
 
-def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_bed,x_bc_surf,z_bc_surf,u_surf):
+def normalize_data_simple(data_raw):
     # make sure the bc information is passed as a vector, not a mesh
     # extract the velocity data
-    xraw = x_data   # unit [m] position
-    zraw = z_data   # unit [m] position
-    wraw = w_data  # unit [m/s] ice velocity
+    xraw = data_raw['all'][0]   # unit [m] position
+    zraw = data_raw['all'][1]   # unit [m] position
+    wraw = data_raw['all'][2]  # unit [m/s] ice velocity
+
+    # extra near-surface points
+    xraw_ns = data_raw['near_surf'][0]   # unit [m] position
+    zraw_ns = data_raw['near_surf'][1]   # unit [m] position
+    wraw_ns = data_raw['near_surf'][2]  # unit [m/s] ice velocity
 
     # flatten the velocity data into 1d array
     x0 = xraw.flatten()
     z0 = zraw.flatten()
     w0 = wraw.flatten()
 
-    x0_surf = x_bc_surf.flatten()
-    z0_surf = z_bc_surf.flatten()
-    u0 = u_surf.flatten()
+    x0_ns = xraw_ns.flatten()
+    z0_ns = zraw_ns.flatten()
+    w0_ns = wraw_ns.flatten()
 
-    x0_bed = x_bc_bed.flatten()
-    z0_bed = z_bc_bed.flatten()
+    x0_ubc = data_raw['bc_u'][0].flatten()
+    z0_ubc = data_raw['bc_u'][1].flatten()
+    u0 = data_raw['bc_u'][2].flatten()
+
+    x0_bed = data_raw['bed'][0].flatten()
+    z0_bed = data_raw['bed'][1].flatten()
 
     # remove the nan value in the velocity data
     idxval_w = jnp.where(~np.isnan(w0))[0]
@@ -139,9 +148,14 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     z = z0[idxval_w, None]
     w = w0[idxval_w, None]
 
+    idxval_w_ns = jnp.where(~np.isnan(w0_ns))[0]
+    x_ns = x0_ns[idxval_w_ns, None]
+    z_ns = z0_ns[idxval_w_ns, None]
+    w_ns = w0_ns[idxval_w_ns, None]
+
     idxval_u = jnp.where(~np.isnan(u0))[0]
-    x_surf = x0_surf[idxval_u, None]
-    z_surf = z0_surf[idxval_u, None]
+    x_ubc = x0_ubc[idxval_u, None]
+    z_ubc = z0_ubc[idxval_u, None]
     u = u0[idxval_u, None]
 
     # calculate the mean and range of the domain
@@ -159,16 +173,20 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     z_n = (z - z_mean) / z_range
     w_n = (w - w_mean) / w_range
 
+    x_n_ns = (x_ns - x_mean) / x_range
+    z_n_ns = (z_ns - z_mean) / z_range
+    w_n_ns = (w_ns - w_mean) / w_range
+
     # normalize the boundary data coords
-    x_div_n = (x_bc_div - x_mean) / x_range
-    z_div_n = (z_bc_div - z_mean) / z_range
-    x_surf_n = (x_surf - x_mean) / x_range
-    z_surf_n = (z_surf - z_mean) / z_range
+    x_div_n = (data_raw['div'][0] - x_mean) / x_range
+    z_div_n = (data_raw['div'][1] - z_mean) / z_range
+    x_ubc_n = (x_ubc - x_mean) / x_range
+    z_ubc_n = (z_ubc - z_mean) / z_range
     x_bed_n = (x0_bed.reshape((len(x0_bed),1)) - x_mean) / x_range
     z_bed_n = (z0_bed.reshape((len(z0_bed),1)) - z_mean) / z_range
     
     # normalize the surface velocities using w_range
-    u_surf_n = u / w_range
+    u_bc_n = u / w_range
 
     # group the raw data
     data_raw = [x0, z0, w0]
@@ -187,12 +205,12 @@ def normalize_data_simple(x_data,z_data,w_data,x_bc_div,z_bc_div,x_bc_bed,z_bc_b
     data_info = [data_mean, data_range, data_norm, data_raw, idxval_all, dsize_all]
 
     # group the input and output into matrix
-    X_star = jnp.hstack((x_n, z_n))
-    X_bc = [jnp.hstack((x_div_n,z_div_n)),jnp.hstack((x_bed_n,z_bed_n)),jnp.hstack((x_surf_n,z_surf_n))]
+    X_star = [jnp.hstack((x_n, z_n)),jnp.hstack((x_n_ns, z_n_ns))]
+    X_bc = [jnp.hstack((x_div_n,z_div_n)),jnp.hstack((x_bed_n,z_bed_n)),jnp.hstack((x_ubc_n,z_ubc_n))]
     # sequence of output matrix column is 
-    U_star = [w_n]
+    U_star = [w_n,w_n_ns]
 
-    return X_star, U_star, X_bc, u_surf_n, data_info
+    return X_star, U_star, X_bc, u_bc_n, data_info
 
 def normalize_data_masscon_real(x_grid,z_grid,zeta_i_grid,w_i_grid,x_bed,z_bed,x_surf,z_surf,u_surf):
     # make sure the bc information is passed as a vector, not a mesh
