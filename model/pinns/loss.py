@@ -160,9 +160,12 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         # load the velocity data and their position
         x_smp = data['smp'][0]
         u_smp = data['smp'][1]
+        x_smp_ns = data['smp'][2]
+        u_smp_ns = data['smp'][3]
 
         # load the position and weight of collocation points
-        x_col = data['col']
+        x_col = data['col'][0]
+        x_col_ns = data['col'][1]
 
         x_div = data['bc_div']
         x_bed = data['bc_bed']
@@ -171,18 +174,24 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
 
         # calculate the gradient of phi at origin
         u_pred = net(x_smp)[:, 1:2] # not 0:2 because we only have data in w
-
+        u_pred_ns = net(x_smp_ns)[:, 1:2]
+        
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
+        f_pred_ns, term_ns = gov_eqn(net, x_col_ns, scale)
+
         f_div = bc_div_eqn(net, x_div)
         f_bed = bc_bed_eqn(net, x_bed, scale)
         f_surf = bc_surf_eqn(net, x_surf)
 
         # calculate the mean squared root error of normalization cond.
         data_err = ms_error(u_pred - u_smp)
+        data_err_ns = ms_error(u_pred_ns - u_smp_ns)
 
         # calculate the mean squared root error of equation
         eqn_err = ms_error(f_pred)
+        eqn_err_ns = ms_error(f_pred_ns)
+
         div_err = ms_error(f_div)
         bed_err = ms_error(f_bed)
         surf_err = ms_error(f_surf-u_surf)
@@ -192,8 +201,8 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
 
         # all errors should be 1d arrays
         # calculate the overall data loss and equation loss
-        loss_data = jnp.sum(data_err )
-        loss_eqn = jnp.sum(eqn_err)
+        loss_data = jnp.sum(data_err)+jnp.sum(data_err_ns)
+        loss_eqn = jnp.sum(eqn_err) + jnp.sum(eqn_err_ns)
         loss_bd = jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) + jnp.sum(surf_err*bd_weight[2])
 
         loss_ref = loss_fun.lref
