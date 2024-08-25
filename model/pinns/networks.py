@@ -64,3 +64,31 @@ def solu_create_simple(scale,scl=1, act_s=0):
         sol = jnp.hstack([uw, rhoL])
         return sol
     return f
+
+def solu_create_realh(scale,H,scl=1, act_s=0):
+    '''
+    :param scale: normalization info
+    :param H: [x,z] coordinates of surface
+    :return: function of the solution (a callable)
+    '''
+    dmean, drange = scale[0:2]
+    x_m = dmean[0]
+    x_scale = drange[0]
+    z_m = dmean[1]
+    z_scale = drange[1]
+
+    def z_surf(x):
+        h = jnp.interp(x*x_scale + x_m,H[0],H[1])   
+        h_nondim = (h-z_m)/z_scale # divide by zscale
+        return h_nondim
+    
+    def f(params, x):
+        x0, z0 = jnp.split(x, 2, axis=1)
+        H = z_surf(x0)
+        pm_rho = params[1]
+        # generate the NN
+        uw = neural_net(params[0], x, scl, act_s)
+        rhoL = 1 + (jnp.exp(pm_rho[0]) - 1) * jnp.exp((-H+z0)/jnp.exp(pm_rho[1]))
+        sol = jnp.hstack([uw, rhoL])
+        return sol
+    return f

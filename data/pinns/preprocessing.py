@@ -212,6 +212,10 @@ def normalize_data_simple(data_raw):
 
     return X_star, U_star, X_bc, u_bc_n, data_info
 
+def normalize_data_momentum(x_grid,z_grid,):
+    xraw = x_grid   # unit [m] position
+    zraw = z_grid
+
 def normalize_data_masscon_real(x_grid,z_grid,zeta_i_grid,w_i_grid,x_bed,z_bed,x_surf,z_surf,u_surf):
     # make sure the bc information is passed as a vector, not a mesh
     # extract the velocity data
