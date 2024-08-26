@@ -101,3 +101,48 @@ def data_sample_create_simple(data_all, n_pt):
         data = dict(smp=[X_smp, U_smp, X_smp_ns, U_smp_ns], col=[X_col, X_col_ns],  bc_div=X_bc_div, bc_bed=X_bc_bed, bc_surf=X_bc_surf, u_surf=U_bd)
         return data
     return dataf
+
+def data_sample_create_momentum(data_all, n_pt):
+    # load the data within ice
+    X_star = data_all[0]
+    U_star = data_all[1]
+    
+    # load the data at the boundaries
+    X_bc = data_all[2]
+
+    rho_params = data_all[5]
+    edge_slopes = data_all[6]
+    # obtain the number of data points and points at the boundary
+    n_data = X_star[0].shape[0]
+    n_bc_edge = X_bc[0].shape[0]
+    n_bc_surf = X_bc[1].shape[0]
+
+    # define the function that can re-sampling for each calling
+    def dataf(key):
+        # generate the new random key
+        keys = random.split(key, 4) 
+
+        # sampling the velocity data point based on the index
+        idx_smp = random.choice(keys[0], jnp.arange(n_data), [n_pt[0]])
+        X_smp = X_star[0][idx_smp]
+        U_smp = U_star[0][idx_smp]
+
+        # generate a random sample of collocation point within the domain
+        idx_col = random.choice(keys[1], jnp.arange(n_data), [n_pt[1]])
+        # sampling the data point based on the index
+        X_col = X_star[0][idx_col]
+
+        # generate a random index of the data at divide and bed
+        idx_bc_edge = random.choice(keys[2], jnp.arange(n_bc_edge), [n_pt[2]])
+        idx_bc_surf = random.choice(keys[3], jnp.arange(n_bc_surf), [n_pt[3]])
+        # sampling the data point based on the index
+        X_bc_edge = X_bc[0]#[idx_bc_edge]
+        X_bc_surf = X_bc[1]#[idx_bc_surf]
+        U_edge = data_all[3][0]#[idx_bc_edge]
+        h_edge = data_all[3][1]#[idx_bc_edge]
+        h_surf = data_all[3][2]#[idx_bc_surf]
+
+        # group all the data and collocation points
+        data = dict(smp=[X_smp, U_smp], col=X_col,  bc_edge=X_bc_edge, bc_surf=X_bc_surf, u_edge=U_edge,edge_slopes = edge_slopes,rho_params = rho_params,h_surf = h_surf,h_edge=h_edge)
+        return data
+    return dataf

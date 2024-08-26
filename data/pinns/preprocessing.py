@@ -212,9 +212,95 @@ def normalize_data_simple(data_raw):
 
     return X_star, U_star, X_bc, u_bc_n, data_info
 
-def normalize_data_momentum(x_grid,z_grid,):
-    xraw = x_grid   # unit [m] position
-    zraw = z_grid
+def normalize_data_momentum(data_raw):
+    # extract the velocity and density data
+    xraw = data_raw['all'][0]   # unit [m] position
+    zraw = data_raw['all'][1]   # unit [m] position
+    uraw = data_raw['all'][2]  # unit [m/s] ice velocity
+    wraw = data_raw['all'][3]  # unit [m/s] ice velocity
+    rho_params = [data_raw['rho_info'][0],data_raw['rho_info'][1]]
+    # flatten the velocity data into 1d array
+    x0 = xraw.flatten()
+    z0 = zraw.flatten()
+    u0 = uraw.flatten()
+    w0 = wraw.flatten()
+
+    x0_edge = data_raw['bc_edge'][0].flatten()
+    z0_edge = data_raw['bc_edge'][1].flatten()
+    u0_edge = data_raw['bc_edge'][2].flatten()
+    slope0_edge = data_raw['bc_edge'][3].flatten()
+    h0_edge = data_raw['bc_edge'][4].flatten()
+
+    x0_surf = data_raw['bc_surf'][0].flatten()
+    z0_surf = data_raw['bc_surf'][1].flatten()
+    p0_surf = data_raw['bc_surf'][2].flatten()
+    h0_surf = data_raw['bc_surf'][3].flatten()
+
+    # remove the nan value in the velocity data
+    idxval_w = jnp.where(~np.isnan(w0))[0]
+    x = x0[idxval_w, None]
+    z = z0[idxval_w, None]
+    u = u0[idxval_w, None]
+    w = w0[idxval_w, None]
+
+    idxval_u = jnp.where(~np.isnan(u0_edge))[0]
+    x_edge = x0_edge[idxval_u, None]
+    z_edge = z0_edge[idxval_u, None]
+    u_edge = u0_edge[idxval_u, None]
+    slope_edge = slope0_edge[idxval_u, None]
+    h_edge = h0_edge[idxval_u, None]
+
+    # calculate the mean and range of the domain
+    x_mean = jnp.mean(x)
+    x_range = (x.max() - x.min()) / 2
+    z_mean = jnp.mean(z)
+    z_range = (z.max() - z.min()) / 2
+
+    # calculate the mean and std of the velocity
+    w_mean = jnp.mean(w)
+    w_range = jnp.std(w) * 2
+
+    # normalize the data
+    x_n = (x - x_mean) / x_range
+    z_n = (z - z_mean) / z_range
+    u_n = u / w_range
+    w_n = (w - w_mean) / w_range
+
+    x_n_edge = (x_edge - x_mean) / x_range
+    z_n_edge = (z_edge - z_mean) / z_range
+    u_n_edge = u_edge/ w_range
+    slope_edge_n = slope_edge *x_range/z_range
+    h_n_edge = (h_edge - z_mean) / z_range
+
+    x_n_surf = (x0_surf - x_mean) / x_range
+    z_n_surf = (z0_surf - z_mean) / z_range
+    p_n_surf = p0_surf
+    h_n_surf = (h0_surf - z_mean) / z_range
+
+    # group the raw data
+    data_raw = [x0, z0, u0, w0]
+    # group the normalized data
+    data_norm = [x_n, z_n, u_n,w_n]
+    # group the nan info of original data
+    idxval_all = idxval_w
+    # group the shape info of original data
+    dsize_all = wraw.shape
+
+    # group the mean and range info for each variable (shape = (3,))
+    data_mean = jnp.hstack([x_mean, z_mean, w_mean])
+    data_range = jnp.hstack([x_range, z_range, w_range])
+
+    # gathering all the data information
+    data_info = [data_mean, data_range, data_norm, data_raw, idxval_all, dsize_all]
+
+    # group the input and output into matrix
+    X_star = [jnp.hstack((x_n, z_n))]
+    X_bc = [jnp.hstack((x_n_edge,z_n_edge)),jnp.hstack((x_n_surf,z_n_surf))]
+    u_bc_n = [u_n_edge,h_n_edge,h_n_surf]
+    # sequence of output matrix column is 
+    U_star = [jnp.hstack((u_n, w_n))]
+
+    return X_star, U_star, X_bc, u_bc_n, data_info, rho_params, slope_edge_n
 
 def normalize_data_masscon_real(x_grid,z_grid,zeta_i_grid,w_i_grid,x_bed,z_bed,x_surf,z_surf,u_surf):
     # make sure the bc information is passed as a vector, not a mesh
