@@ -90,7 +90,7 @@ def edge_bc_egn(net,x,slope_edge,scale,H):
     dmean, drange = scale[0:2]
     x0, z0, w0 = drange[0:3]
     grad, sol = vectgrad(net,x)
-    z = x[:,1:2] # double check this!
+    z = x[:,1:2] # double check this! Should be right
     u_z = grad[:,1:2]
     mu = sol[:, 2:3]
     rho = sol[:,4:5]
@@ -99,3 +99,8 @@ def edge_bc_egn(net,x,slope_edge,scale,H):
     e1 = eterm1-eterm2
     valterm = jnp.hstack([eterm1,eterm2])
     return e1, valterm
+
+def surf_bc_eqn(net,x):
+    sol, vjp_fn = vjp(net, x)
+    e1 = sol[:, 3:4] # p 
+    return e1

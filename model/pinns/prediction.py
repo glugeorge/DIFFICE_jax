@@ -135,7 +135,9 @@ def extract_scale_simple(scale_info):
     lx0, lz0, w0 = drange[0:3]
     lxm, lzm, wm = dmean[0:3]
     rho0 = 918
-    scale = dict(lx0=lx0,lz0=lz0,w0=w0,lxm=lxm,lzm=lzm,wm=wm,rho0=rho0)
+    p0 = 918*9.81*lz0
+    mu0 = p0/(lz0*w0)
+    scale = dict(lx0=lx0,lz0=lz0,w0=w0,lxm=lxm,lzm=lzm,wm=wm,rho0=rho0,p0=p0,mu0=mu0)
     return scale
 
 def predict_masscon(func_all,data_all):
@@ -205,5 +207,90 @@ def predict_masscon(func_all,data_all):
                 "x": x, "z": z, "w_g": w_data, "u": u_p, "w": w_p, "rho": rho,
                 "u_x": ux_p, "u_z": uz_p, "w_x": wx_p, "w_z": wz_p, "rho_x": rhox_p, "rho_z":rhoz_p,
                 "e1": e1, "e11": e11, "e12": e12, "scale": varscl
+    }
+    return results
+
+def predict_momentum(func_all,data_all):
+    # obtain the normalized dataset
+    x_star, z_star, u_star, w_star = data_all[4][2]
+    # set the output position based on the original velocity data
+    x_pred = jnp.hstack([x_star, z_star])
+    # obtain the non-nan index of the original dataset
+    idxval = data_all[4][-2]
+    # obtain the 2D shape of the original dataset
+    dsize = data_all[4][-1]
+    # extract the scale for different variables
+    scale = data_all[4][0:2]
+    varscl = extract_scale_simple(scale)
+
+    # extract the function of solution and equation residue
+    [f_u, f_gu, gov_eqn] = func_all
+    f_eqn = lambda x: gov_eqn(f_u, x, scale)
+
+    # calculate the network output at the original velocity-data positions
+    uw_mup_rho = f_u(x_pred)
+
+     # set the partition number
+    nsp = 4
+    # separate input into different partition to avoid GPU memory limit
+    x_psp = jnp.array_split(x_pred, nsp)
+    idxsp = jnp.arange(nsp).tolist()
+    # calculate the derivative of network output at the velocity-data positions
+    du_list = tree_map(lambda x: f_gu(x_psp[x]), idxsp)
+    # calculate the associated equation residue of the trained network
+    eqnterm_list = tree_map(lambda x: f_eqn(x_psp[x]), idxsp)
+    eqn_list = tree_map(lambda x: eqnterm_list[x][0], idxsp)
+    term_list = tree_map(lambda x: eqnterm_list[x][1], idxsp)
+    # combine the sub-group list into a long array
+    duw_mup_rho = jnp.vstack(du_list)
+    eqn = jnp.vstack(eqn_list)
+    term = jnp.vstack(term_list)
+
+    # convert to 2D original velocity dataset
+    x = dataArrange(x_star, idxval, dsize) * varscl['lx0'] + varscl['lxm']
+    z = dataArrange(z_star, idxval, dsize) * varscl['lz0'] + varscl['lzm']
+    u_data = dataArrange(u_star, idxval, dsize) * varscl['w0'] 
+    w_data = dataArrange(w_star, idxval, dsize) * varscl['w0'] + varscl['wm']
+
+    # convert to 2D NN prediction
+    u_p = dataArrange(uw_mup_rho[:, 0:1], idxval, dsize) * varscl['w0'] 
+    w_p = dataArrange(uw_mup_rho[:, 1:2], idxval, dsize) * varscl['w0'] + varscl['wm']
+    mu_p = dataArrange(uw_mup_rho[:, 2:3], idxval, dsize) * varscl['mu0'] 
+    p_p = dataArrange(uw_mup_rho[:, 3:4], idxval, dsize) * varscl['p0'] 
+    rho_p = dataArrange(uw_mup_rho[:, 4:5], idxval, dsize) * varscl['rho0'] 
+
+    # convert to 2D derivative of prediction
+    ux_p = dataArrange(duw_mup_rho[:, 0:1], idxval, dsize) * varscl['w0']/varscl['lx0']
+    uz_p = dataArrange(duw_mup_rho[:, 1:2], idxval, dsize) * varscl['w0']/varscl['lz0']
+    wx_p = dataArrange(duw_mup_rho[:, 2:3], idxval, dsize) * varscl['w0']/varscl['lx0']
+    wz_p = dataArrange(duw_mup_rho[:, 3:4], idxval, dsize) * varscl['w0']/varscl['lz0']
+    mux_p = dataArrange(duw_mup_rho[:, 4:5], idxval, dsize) * varscl['mu0']/varscl['lx0']
+    muz_p = dataArrange(duw_mup_rho[:, 5:6], idxval, dsize)  * varscl['mu0']/varscl['lz0']
+    px_p = dataArrange(duw_mup_rho[:, 6:7], idxval, dsize)  * varscl['p0']/varscl['lx0']
+    pz_p = dataArrange(duw_mup_rho[:, 7:8], idxval, dsize) * varscl['p0']/varscl['lz0']
+    rhox_p = dataArrange(duw_rho[:, 8:9], idxval, dsize) * varscl['rho0']/varscl['lx0']
+    rhoz_p = dataArrange(duw_rho[:, 9:10], idxval, dsize) * varscl['rho0']/varscl['lz0']
+
+    term0 = varscl['p0']/varscl['lx0'] # we divide through by this term
+
+    # convert to 2D equation residue
+    e1 = dataArrange(eqn[:, 0:1], idxval, dsize) * term0
+    e2 = dataArrange(eqn[:, 1:2], idxval, dsize) * term0
+
+    # convert to 2D equation term value
+    e11 = dataArrange(term[:, 0:1], idxval, dsize) * term0
+    e12 = dataArrange(term[:, 1:2], idxval, dsize) * term0
+    e13 = dataArrange(term[:, 2:3], idxval, dsize) * term0
+    e21 = dataArrange(term[:, 3:4], idxval, dsize) * term0
+    e22 = dataArrange(term[:, 4:5], idxval, dsize) * term0
+    e23 = dataArrange(term[:, 5:6], idxval, dsize) * term0
+
+
+    results = {
+                "x": x, "z": z, "w_g": w_data, "u": u_p, "w": w_p, "mu": mu_p, "p": p_p, "rho": rho_p,
+                "u_x": ux_p, "u_z": uz_p, "w_x": wx_p, "w_z": wz_p, "mu_x": mux_p, "mu_z": muz_p, "p_x": px_p, "p_z": pz_p,"rho_x": rhox_p, "rho_z":rhoz_p,
+                "e11": e11, "e12": e12, "e13": e13,
+                "e21": e21, "e22": e22, "e23": e23,
+                "e1": e1, "e2": e2, "scale": varscl
     }
     return results
