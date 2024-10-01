@@ -58,23 +58,22 @@ def init_pinns_simple(parent_key, n_hl, n_unit):
 
     return [params_u, params_rhoL]
 
-def init_pinns_momentum(parent_key, n_hl, n_unit):
+def init_pinns_momentum_synthetic(parent_key, n_hl, n_unit):
     '''
     :param n_hl: number of hidden layers [int]
     :param n_unit: number of units in each layer [int]
     '''
 
-    # set the neural network shape for u, w
-    layers1 = [2] + n_hl * [n_unit] + [2] # since outputting u,w,mu,p for x,z
+    # set the neural network shape for u, w, rho, p
+    layers1 = [2] + n_hl * [n_unit] + [4] # since outputting u,w,mu,p for x,z
 
-    # set the neural network shape for mu, p
-    layers2 = [2] + n_hl * [n_unit] + [2]
+    # set the neural network shape for mu
+    layers2 = [2] + n_hl * [n_unit] + [1]
 
     # generate the random key for each network
     keys = random.split(parent_key, 2)
     # generate weights and biases for
     params_u = init_single_net(keys[0], layers1)
-    params_mu_p = init_single_net(keys[0], layers2)
-    params_rhoL = random.truncated_normal(keys[1], -2, 2, shape=(2,))
+    params_mu = init_single_net(keys[0], layers2)
 
-    return [params_u, params_mu_p, params_rhoL]
+    return [params_u, params_mu]

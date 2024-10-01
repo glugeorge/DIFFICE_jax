@@ -212,43 +212,38 @@ def normalize_data_simple(data_raw):
 
     return X_star, U_star, X_bc, u_bc_n, data_info
 
-def normalize_data_momentum(data_raw):
+def normalize_data_momentum_synthetic(ds):
     # extract the velocity and density data
-    xraw = data_raw['all'][0]   # unit [m] position
-    zraw = data_raw['all'][1]   # unit [m] position
-    uraw = data_raw['all'][2]  # unit [m/s] ice velocity
-    wraw = data_raw['all'][3]  # unit [m/s] ice velocity
-    rho_params = [data_raw['rho_info'][0],data_raw['rho_info'][1]]
-    # flatten the velocity data into 1d array
+    xcoords = ds['x'].values   # unit [m] position
+    zcoords = ds['z'].values   # unit [m] position
+    xraw, zraw = np.meshgrid(xcoords,zcoords)
+    uraw = ds['u'].values/(31556926.0)  # unit [m/s] ice velocity
+    wraw = ds['w'].values/(31556926.0)  # unit [m/s] ice velocity
+
+    # Current assumptions: constant density, known pressures
+    rhoraw = 910*np.ones(xraw.shape) # assuming constant density right now
+    praw = ds['p'].values * 1e6
+
+    # flatten the  data into 1d array
     x0 = xraw.flatten()
     z0 = zraw.flatten()
     u0 = uraw.flatten()
     w0 = wraw.flatten()
+    rho0 = rhoraw.flatten()
+    p0 = praw.flatten()
 
-    x0_edge = data_raw['bc_edge'][0].flatten()
-    z0_edge = data_raw['bc_edge'][1].flatten()
-    u0_edge = data_raw['bc_edge'][2].flatten()
-    slope0_edge = data_raw['bc_edge'][3].flatten()
-    h0_edge = data_raw['bc_edge'][4].flatten()
+    # with current assumptions, no boundary conditions
 
-    x0_surf = data_raw['bc_surf'][0].flatten()
-    z0_surf = data_raw['bc_surf'][1].flatten()
-    p0_surf = data_raw['bc_surf'][2].flatten()
-    h0_surf = data_raw['bc_surf'][3].flatten()
-
-    # remove the nan value in the velocity data
+    # remove the nan value in the data
     idxval_w = jnp.where(~np.isnan(w0))[0]
     x = x0[idxval_w, None]
     z = z0[idxval_w, None]
     u = u0[idxval_w, None]
     w = w0[idxval_w, None]
+    rho = rho0[idxval_w, None]
+    p = p0[idxval_w, None]
 
-    idxval_u = jnp.where(~np.isnan(u0_edge))[0]
-    x_edge = x0_edge[idxval_u, None]
-    z_edge = z0_edge[idxval_u, None]
-    u_edge = u0_edge[idxval_u, None]
-    slope_edge = slope0_edge[idxval_u, None]
-    h_edge = h0_edge[idxval_u, None]
+    # again, no BC right now
 
     # calculate the mean and range of the domain
     x_mean = jnp.mean(x)
@@ -256,31 +251,24 @@ def normalize_data_momentum(data_raw):
     z_mean = jnp.mean(z)
     z_range = (z.max() - z.min()) / 2
 
-    # calculate the mean and std of the velocity
+    # calculate the mean and std of the velocity 
     w_mean = jnp.mean(w)
     w_range = jnp.std(w) * 2
 
     # normalize the data
     x_n = (x - x_mean) / x_range
     z_n = (z - z_mean) / z_range
-    u_n = u / w_range
+    u_n = u / w_range # because assuming u0 is w0, and symmetry so no demeaning
     w_n = (w - w_mean) / w_range
 
-    x_n_edge = (x_edge - x_mean) / x_range
-    z_n_edge = (z_edge - z_mean) / z_range
-    u_n_edge = u_edge/ w_range
-    slope_edge_n = slope_edge *x_range/z_range
-    h_n_edge = (h_edge - z_mean) / z_range
-
-    x_n_surf = (x0_surf - x_mean) / x_range
-    z_n_surf = (z0_surf - z_mean) / z_range
-    p_n_surf = p0_surf
-    h_n_surf = (h0_surf - z_mean) / z_range
+    # normalize densities and pressures
+    rho_n = rho / 910
+    p_n = p / (910*9.81*z_range)
 
     # group the raw data
-    data_raw = [x0, z0, u0, w0]
+    data_raw = [x0, z0, u0, w0, rho0, p0]
     # group the normalized data
-    data_norm = [x_n, z_n, u_n,w_n]
+    data_norm = [x_n, z_n, u_n, w_n, rho_n, p_n]
     # group the nan info of original data
     idxval_all = idxval_w
     # group the shape info of original data
@@ -295,12 +283,13 @@ def normalize_data_momentum(data_raw):
 
     # group the input and output into matrix
     X_star = [jnp.hstack((x_n, z_n))]
-    X_bc = [jnp.hstack((x_n_edge,z_n_edge)),jnp.hstack((x_n_surf,z_n_surf))]
-    u_bc_n = [u_n_edge,h_n_edge,h_n_surf]
+    #X_bc = [jnp.hstack((x_n_edge,z_n_edge)),jnp.hstack((x_n_surf,z_n_surf))]
+    #u_bc_n = [u_n_edge,h_n_edge,h_n_surf]
+    
     # sequence of output matrix column is 
-    U_star = [jnp.hstack((u_n, w_n))]
+    U_star = [jnp.hstack((u_n, w_n, rho_n, p_n))]
 
-    return X_star, U_star, X_bc, u_bc_n, data_info, rho_params, slope_edge_n
+    return X_star, U_star, data_info
 
 def normalize_data_masscon_real(x_grid,z_grid,zeta_i_grid,w_i_grid,x_bed,z_bed,x_surf,z_surf,u_surf):
     # make sure the bc information is passed as a vector, not a mesh

@@ -134,8 +134,8 @@ def extract_scale_simple(scale_info):
     dmean, drange = scale_info
     lx0, lz0, w0 = drange[0:3]
     lxm, lzm, wm = dmean[0:3]
-    rho0 = 918
-    p0 = 918*9.81*lz0
+    rho0 = 910 # for synthetic 
+    p0 = rho0*9.81*lz0
     mu0 = p0/(lz0*w0)
     scale = dict(lx0=lx0,lz0=lz0,w0=w0,lxm=lxm,lzm=lzm,wm=wm,rho0=rho0,p0=p0,mu0=mu0)
     return scale
@@ -210,17 +210,17 @@ def predict_masscon(func_all,data_all):
     }
     return results
 
-def predict_momentum(func_all,data_all):
+def predict_momentum_synthetic(func_all,data_all):
     # obtain the normalized dataset
-    x_star, z_star, u_star, w_star = data_all[4][2]
+    x_star, z_star, u_star, w_star, rho_star, p_star = data_all[-1][2]
     # set the output position based on the original velocity data
     x_pred = jnp.hstack([x_star, z_star])
     # obtain the non-nan index of the original dataset
-    idxval = data_all[4][-2]
+    idxval = data_all[-1][-2]
     # obtain the 2D shape of the original dataset
-    dsize = data_all[4][-1]
+    dsize = data_all[-1][-1]
     # extract the scale for different variables
-    scale = data_all[4][0:2]
+    scale = data_all[-1][0:2]
     varscl = extract_scale_simple(scale)
 
     # extract the function of solution and equation residue
@@ -228,7 +228,7 @@ def predict_momentum(func_all,data_all):
     f_eqn = lambda x: gov_eqn(f_u, x, scale)
 
     # calculate the network output at the original velocity-data positions
-    uw_mup_rho = f_u(x_pred)
+    uwrhop_mu = f_u(x_pred)
 
      # set the partition number
     nsp = 4
@@ -242,7 +242,7 @@ def predict_momentum(func_all,data_all):
     eqn_list = tree_map(lambda x: eqnterm_list[x][0], idxsp)
     term_list = tree_map(lambda x: eqnterm_list[x][1], idxsp)
     # combine the sub-group list into a long array
-    duw_mup_rho = jnp.vstack(du_list)
+    duwrhop_mu = jnp.vstack(du_list)
     eqn = jnp.vstack(eqn_list)
     term = jnp.vstack(term_list)
 
@@ -253,23 +253,23 @@ def predict_momentum(func_all,data_all):
     w_data = dataArrange(w_star, idxval, dsize) * varscl['w0'] + varscl['wm']
 
     # convert to 2D NN prediction
-    u_p = dataArrange(uw_mup_rho[:, 0:1], idxval, dsize) * varscl['w0'] 
-    w_p = dataArrange(uw_mup_rho[:, 1:2], idxval, dsize) * varscl['w0'] + varscl['wm']
-    mu_p = dataArrange(uw_mup_rho[:, 2:3], idxval, dsize) * varscl['mu0'] 
-    p_p = dataArrange(uw_mup_rho[:, 3:4], idxval, dsize) * varscl['p0'] 
-    rho_p = dataArrange(uw_mup_rho[:, 4:5], idxval, dsize) * varscl['rho0'] 
+    u_p = dataArrange(uwrhop_mu[:, 0:1], idxval, dsize) * varscl['w0'] 
+    w_p = dataArrange(uwrhop_mu[:, 1:2], idxval, dsize) * varscl['w0'] + varscl['wm']
+    rho_p = dataArrange(uwrhop_mu[:, 2:3], idxval, dsize) * varscl['rho0'] 
+    p_p = dataArrange(uwrhop_mu[:, 3:4], idxval, dsize) * varscl['p0'] 
+    mu_p = dataArrange(uwrhop_mu[:, 4:5], idxval, dsize) * varscl['mu0'] 
 
     # convert to 2D derivative of prediction
-    ux_p = dataArrange(duw_mup_rho[:, 0:1], idxval, dsize) * varscl['w0']/varscl['lx0']
-    uz_p = dataArrange(duw_mup_rho[:, 1:2], idxval, dsize) * varscl['w0']/varscl['lz0']
-    wx_p = dataArrange(duw_mup_rho[:, 2:3], idxval, dsize) * varscl['w0']/varscl['lx0']
-    wz_p = dataArrange(duw_mup_rho[:, 3:4], idxval, dsize) * varscl['w0']/varscl['lz0']
-    mux_p = dataArrange(duw_mup_rho[:, 4:5], idxval, dsize) * varscl['mu0']/varscl['lx0']
-    muz_p = dataArrange(duw_mup_rho[:, 5:6], idxval, dsize)  * varscl['mu0']/varscl['lz0']
-    px_p = dataArrange(duw_mup_rho[:, 6:7], idxval, dsize)  * varscl['p0']/varscl['lx0']
-    pz_p = dataArrange(duw_mup_rho[:, 7:8], idxval, dsize) * varscl['p0']/varscl['lz0']
-    rhox_p = dataArrange(duw_rho[:, 8:9], idxval, dsize) * varscl['rho0']/varscl['lx0']
-    rhoz_p = dataArrange(duw_rho[:, 9:10], idxval, dsize) * varscl['rho0']/varscl['lz0']
+    ux_p = dataArrange(duwrhop_mu[:, 0:1], idxval, dsize) * varscl['w0']/varscl['lx0']
+    uz_p = dataArrange(duwrhop_mu[:, 1:2], idxval, dsize) * varscl['w0']/varscl['lz0']
+    wx_p = dataArrange(duwrhop_mu[:, 2:3], idxval, dsize) * varscl['w0']/varscl['lx0']
+    wz_p = dataArrange(duwrhop_mu[:, 3:4], idxval, dsize) * varscl['w0']/varscl['lz0']
+    rhox_p = dataArrange(duwrhop_mu[:, 4:5], idxval, dsize) * varscl['rho0']/varscl['lx0']
+    rhoz_p = dataArrange(duwrhop_mu[:, 5:6], idxval, dsize)  * varscl['rho0']/varscl['lz0']
+    px_p = dataArrange(duwrhop_mu[:, 6:7], idxval, dsize)  * varscl['p0']/varscl['lx0']
+    pz_p = dataArrange(duwrhop_mu[:, 7:8], idxval, dsize) * varscl['p0']/varscl['lz0']
+    mux_p = dataArrange(duwrhop_mu[:, 8:9], idxval, dsize) * varscl['mu0']/varscl['lx0']
+    muz_p = dataArrange(duwrhop_mu[:, 9:10], idxval, dsize) * varscl['mu0']/varscl['lz0']
 
     term0 = varscl['p0']/varscl['lx0'] # we divide through by this term
 

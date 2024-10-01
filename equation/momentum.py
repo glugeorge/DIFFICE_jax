@@ -47,17 +47,18 @@ def gov_eqn(net, x, scale):
     x0, z0, w0 = drange[0:3]
     def grad1stOrder(net, x):
         grad, sol = vectgrad(net, x)
+        # order should u w rho p mu
         u = sol[:, 0:1]
         w = sol[:, 1:2]
-        mu = sol[:, 2:3]
+        rho = sol[:, 2:3]
         p = sol[:, 3:4]
-        rho = sol[:,4:5]
+        mu = sol[:,4:5]
 
         u_x = grad[:, 0:1]
         u_z = grad[:, 1:2]
         w_x = grad[:, 2:3]
         w_z = grad[:, 3:4]
-        # Mu_x, mu_z for 4:5, 5:6
+        # rho_x, rho_z for 4:5, 5:6
         p_x = grad[:, 6:7]
         p_z = grad[:, 7:8]
 
@@ -85,22 +86,3 @@ def gov_eqn(net, x, scale):
     f_eqn = jnp.hstack([e1, e2])
     val_term = jnp.hstack([e1term1, e1term2, e1term3, e2term1, e2term2, e2term3])
     return f_eqn, val_term
-
-def edge_bc_egn(net,x,slope_edge,scale,H):
-    dmean, drange = scale[0:2]
-    x0, z0, w0 = drange[0:3]
-    grad, sol = vectgrad(net,x)
-    z = x[:,1:2] # double check this! Should be right
-    u_z = grad[:,1:2]
-    mu = sol[:, 2:3]
-    rho = sol[:,4:5]
-    eterm1 = mu*u_z
-    eterm2 = z0**2 * rho*slope_edge*(H-z)
-    e1 = eterm1-eterm2
-    valterm = jnp.hstack([eterm1,eterm2])
-    return e1, valterm
-
-def surf_bc_eqn(net,x):
-    sol, vjp_fn = vjp(net, x)
-    e1 = sol[:, 3:4] # p 
-    return e1

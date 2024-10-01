@@ -321,10 +321,10 @@ def loss_masscon_realdata_create(predf, eqn_all, scale, lw):
     loss_fun.lref = 1.0
     return loss_fun
 
-def loss_momentum_create(predf, eqn_all, scale, lw):
+def loss_momentum_create_synthetic(predf, eqn_all, scale, lw):
 
     # separate the governing equation and boundary conditions
-    gov_eqn, edge_bc_eqn, surf_bc_eqn = eqn_all
+    gov_eqn = eqn_all
 
     # loss function used for the PINN training
     def loss_fun(params, data):
@@ -337,29 +337,17 @@ def loss_momentum_create(predf, eqn_all, scale, lw):
         # load the position and weight of collocation points
         x_col = data['col']
 
-        x_edge = data['bc_edge']
-        x_surf = data['bc_surf']
-        u_edge= data['u_edge'] # can this be an additional data error?
-        h_edge= data['h_edge']
-        edge_slopes = data['edge_slopes']
-
         # calculate the gradient of phi at origin
-        u_pred = net(x_smp)[:, 0:2] #  0:2 because we have data in u,w
+        u_pred = net(x_smp)[:, 0:4] #  0:2 because we have data in u,w, rho, p
         
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
-
-        f_edge = edge_bc_eqn(net, x_edge,edge_slopes,scale,h_edge)
-        f_surf = surf_bc_eqn(net, x_surf)
 
         # calculate the mean squared root error of normalization cond.
         data_err = ms_error(u_pred - u_smp)
 
         # calculate the mean squared root error of equation
         eqn_err = ms_error(f_pred)
-
-        edge_err = ms_error(f_edge)
-        surf_err = ms_error(f_surf)
 
         # set weights for boundary conditions
         bd_weight = [1,1]
@@ -368,17 +356,17 @@ def loss_momentum_create(predf, eqn_all, scale, lw):
         # calculate the overall data loss and equation loss
         loss_data = jnp.sum(data_err)
         loss_eqn = jnp.sum(eqn_err) 
-        loss_bd = jnp.sum(edge_err*bd_weight[0])  + jnp.sum(surf_err*bd_weight[1])
+        #loss_bd = jnp.sum(edge_err*bd_weight[0])  + jnp.sum(surf_err*bd_weight[1])
 
         loss_ref = loss_fun.lref
         # calculate total loss
 
         # lw should have 3 weights
-        loss = (loss_data + lw[0]*loss_eqn + lw[1]*loss_bd ) / loss_ref
+        loss = (loss_data + lw[0]*loss_eqn  ) / loss_ref
         
         # group the loss of all conditions and equations
-        loss_info = jnp.hstack([jnp.array([loss, loss_data, loss_eqn, loss_bd]),
-                                data_err, eqn_err, edge_err, surf_err])
+        loss_info = jnp.hstack([jnp.array([loss, loss_data, loss_eqn]),
+                                data_err, eqn_err,])
         return loss, loss_info
 
     loss_fun.lref = 1.0

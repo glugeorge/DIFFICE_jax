@@ -1,9 +1,10 @@
 import sys
 import jax.numpy as jnp
 import optax
-from jax import random, jit, grad
+from jax import random, jit, grad, pure_callback
 import jax.flatten_util as flat_utl
-from jax.experimental.host_callback import call
+from jax.debug import print as call_print
+from jax.experimental import io_callback as call
 from tensorflow_probability.substrates import jax as tfp
 import functools
 
@@ -112,9 +113,9 @@ def lbfgs_function(lossf, init_params, data):
         loss_value = loss_info[0]
 
         # # store loss value so we can retrieve later
-        call(lambda x: f.loss.append(x), loss_info[0:4], result_shape=None)
+        call(lambda x: f.loss.append(x), None, loss_info[0:4])
         call(lambda x: print(f"Step: NaN | Loss: {x[0]:.4e} | Loss_d: {x[1]:.4e}"
-                  f" Loss_e: {x[2]:.4e} | Loss_b: {x[3]:.4e}"), loss_info)
+                  f" Loss_e: {x[2]:.4e} | Loss_b: {x[3]:.4e}"), None,loss_info)
         return loss_value, grads_1d
 
     # store these information as members so we can use them outside the scope
