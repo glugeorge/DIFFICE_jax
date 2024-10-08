@@ -86,3 +86,9 @@ def gov_eqn(net, x, scale):
     f_eqn = jnp.hstack([e1, e2])
     val_term = jnp.hstack([e1term1, e1term2, e1term3, e2term1, e2term2, e2term3])
     return f_eqn, val_term
+
+def eqn_bc(net,x):
+    sol, vjp_fn = vjp(net, x)
+    u = sol[:,0:1]
+    e1 = u
+    return e1 

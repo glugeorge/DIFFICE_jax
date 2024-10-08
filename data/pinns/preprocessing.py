@@ -232,7 +232,11 @@ def normalize_data_momentum_synthetic(ds):
     rho0 = rhoraw.flatten()
     p0 = praw.flatten()
 
-    # with current assumptions, no boundary conditions
+    # boundary conditions of bed and divide
+    x_bed0 = ds['x_bed'].flatten()
+    z_bed0 = ds['z_bed'].flatten()
+    x_div0 = ds['x_div'].flatten()
+    z_div0 = ds['z_div'].flatten()
 
     # remove the nan value in the data
     idxval_w = jnp.where(~np.isnan(w0))[0]
@@ -243,7 +247,7 @@ def normalize_data_momentum_synthetic(ds):
     rho = rho0[idxval_w, None]
     p = p0[idxval_w, None]
 
-    # again, no BC right now
+    # again, no BC with nans right now - with bed and div no nans
 
     # calculate the mean and range of the domain
     x_mean = jnp.mean(x)
@@ -260,6 +264,12 @@ def normalize_data_momentum_synthetic(ds):
     z_n = (z - z_mean) / z_range
     u_n = u / w_range # because assuming u0 is w0, and symmetry so no demeaning
     w_n = (w - w_mean) / w_range
+
+    # boundaries
+    x_bed_n = (x_bed0 - x_mean) / x_range
+    x_div_n = (x_div0 - x_mean) / x_range
+    z_bed_n = (z_bed0 - z_mean) / z_range
+    z_div_n = (z_div0 - z_mean) / z_range
 
     # normalize densities and pressures
     rho_n = rho / 910
@@ -283,13 +293,14 @@ def normalize_data_momentum_synthetic(ds):
 
     # group the input and output into matrix
     X_star = [jnp.hstack((x_n, z_n))]
+    X_bc = [jnp.hstack((x_bed_n,z_bed_n)),jnp.hstack((x_div_n,z_div_n))]
     #X_bc = [jnp.hstack((x_n_edge,z_n_edge)),jnp.hstack((x_n_surf,z_n_surf))]
     #u_bc_n = [u_n_edge,h_n_edge,h_n_surf]
     
     # sequence of output matrix column is 
     U_star = [jnp.hstack((u_n, w_n, rho_n, p_n))]
 
-    return X_star, U_star, data_info
+    return X_star, U_star, X_bc, data_info
 
 def normalize_data_masscon_real(x_grid,z_grid,zeta_i_grid,w_i_grid,x_bed,z_bed,x_surf,z_surf,u_surf):
     # make sure the bc information is passed as a vector, not a mesh

@@ -108,7 +108,7 @@ def data_sample_create_momentum_synthetic(data_all, n_pt):
     U_star = data_all[1]
     
     # load the data at the boundaries
-    # none right now
+    X_bc = data_all[2]
 
     # obtain the number of data points and points at the boundary
     n_data = X_star[0].shape[0]
@@ -129,10 +129,12 @@ def data_sample_create_momentum_synthetic(data_all, n_pt):
         X_col = X_star[0][idx_col]
 
         # generate a random index of the data at divide and bed
-        
+        X_bc_bed = X_bc[0]
+        X_bc_div = X_bc[1]
+
         # sampling the data point based on the index
 
         # group all the data and collocation points
-        data = dict(smp=[X_smp, U_smp], col=X_col)
+        data = dict(smp=[X_smp, U_smp], col=X_col, bc_div=X_bc_div, bc_bed=X_bc_bed)
         return data
     return dataf
