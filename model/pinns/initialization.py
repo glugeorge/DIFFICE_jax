@@ -65,7 +65,7 @@ def init_pinns_momentum_synthetic(parent_key, n_hl, n_unit):
     '''
 
     # set the neural network shape for u, w, rho, p
-    layers1 = [2] + n_hl * [n_unit] + [4] # since outputting u,w,mu,p for x,z
+    layers1 = [2] + n_hl * [n_unit] + [4] # since outputting u,w,rho,p for x,z
 
     # set the neural network shape for mu
     layers2 = [2] + n_hl * [n_unit] + [1]

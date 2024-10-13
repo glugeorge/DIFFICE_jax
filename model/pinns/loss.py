@@ -202,8 +202,9 @@ def loss_masscon_create(predf, eqn_all, scale, lw):
         # all errors should be 1d arrays
         # calculate the overall data loss and equation loss
         loss_data = jnp.sum(data_err)+jnp.sum(data_err_ns)
-        loss_eqn = jnp.sum(eqn_err) + jnp.sum(eqn_err_ns)
-        loss_bd = jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) + jnp.sum(surf_err*bd_weight[2])
+        # for a start, do only data loss
+        loss_eqn = 0 #jnp.sum(eqn_err) + jnp.sum(eqn_err_ns)
+        loss_bd = 0 # jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) + jnp.sum(surf_err*bd_weight[2])
 
         loss_ref = loss_fun.lref
         # calculate total loss

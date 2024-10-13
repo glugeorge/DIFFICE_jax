@@ -223,6 +223,8 @@ def normalize_data_momentum_synthetic(ds):
     # Current assumptions: constant density, known pressures
     rhoraw = 910*np.ones(xraw.shape) # assuming constant density right now
     praw = ds['p'].values * 1e6
+    # Also inputting mu data for a sanity check
+    muraw = ds['eta_pas']
 
     # flatten the  data into 1d array
     x0 = xraw.flatten()
@@ -231,12 +233,13 @@ def normalize_data_momentum_synthetic(ds):
     w0 = wraw.flatten()
     rho0 = rhoraw.flatten()
     p0 = praw.flatten()
+    mu0 = muraw.flatten()
 
     # boundary conditions of bed and divide
-    x_bed0 = ds['x_bed'].flatten()
-    z_bed0 = ds['z_bed'].flatten()
-    x_div0 = ds['x_div'].flatten()
-    z_div0 = ds['z_div'].flatten()
+    x_bed0 = ds['x_bed'].values.flatten()
+    z_bed0 = ds['z_bed'].values.flatten()
+    x_div0 = ds['x_div'].values.flatten()
+    z_div0 = ds['z_div'].values.flatten()
 
     # remove the nan value in the data
     idxval_w = jnp.where(~np.isnan(w0))[0]
@@ -246,6 +249,7 @@ def normalize_data_momentum_synthetic(ds):
     w = w0[idxval_w, None]
     rho = rho0[idxval_w, None]
     p = p0[idxval_w, None]
+    mu = mu0[idxval_w, None]
 
     # again, no BC with nans right now - with bed and div no nans
 
@@ -266,19 +270,21 @@ def normalize_data_momentum_synthetic(ds):
     w_n = (w - w_mean) / w_range
 
     # boundaries
-    x_bed_n = (x_bed0 - x_mean) / x_range
-    x_div_n = (x_div0 - x_mean) / x_range
-    z_bed_n = (z_bed0 - z_mean) / z_range
-    z_div_n = (z_div0 - z_mean) / z_range
+    x_bed_n = (x_bed0.reshape((len(x_bed0),1)) - x_mean) / x_range
+    x_div_n = (x_div0.reshape((len(x_div0),1)) - x_mean) / x_range
+    z_bed_n = (z_bed0.reshape((len(z_bed0),1)) - z_mean) / z_range
+    z_div_n = (z_div0.reshape((len(z_div0),1)) - z_mean) / z_range
 
     # normalize densities and pressures
     rho_n = rho / 910
     p_n = p / (910*9.81*z_range)
+    # normalize viscosity
+    mu_n = mu / ((910*9.81*z_range)/(x_range*w_range))
 
     # group the raw data
-    data_raw = [x0, z0, u0, w0, rho0, p0]
+    data_raw = [x0, z0, u0, w0, rho0, p0, mu0]
     # group the normalized data
-    data_norm = [x_n, z_n, u_n, w_n, rho_n, p_n]
+    data_norm = [x_n, z_n, u_n, w_n, rho_n, p_n,mu_n]
     # group the nan info of original data
     idxval_all = idxval_w
     # group the shape info of original data
@@ -298,7 +304,7 @@ def normalize_data_momentum_synthetic(ds):
     #u_bc_n = [u_n_edge,h_n_edge,h_n_surf]
     
     # sequence of output matrix column is 
-    U_star = [jnp.hstack((u_n, w_n, rho_n, p_n))]
+    U_star = [jnp.hstack((u_n, w_n, rho_n, p_n, mu_n))]
 
     return X_star, U_star, X_bc, data_info
 
