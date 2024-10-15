@@ -224,7 +224,7 @@ def normalize_data_momentum_synthetic(ds):
     rhoraw = 910*np.ones(xraw.shape) # assuming constant density right now
     praw = ds['p'].values * 1e6
     # Also inputting mu data for a sanity check
-    muraw = ds['eta_pas']
+    muraw = ds['eta_pas'].values
 
     # flatten the  data into 1d array
     x0 = xraw.flatten()
