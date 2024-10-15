@@ -136,7 +136,7 @@ def extract_scale_simple(scale_info):
     lxm, lzm, wm = dmean[0:3]
     rho0 = 910 # for synthetic 
     p0 = rho0*9.81*lz0
-    mu0 = p0/(lz0*w0)
+    mu0 = p0/(lx0*w0)
     scale = dict(lx0=lx0,lz0=lz0,w0=w0,lxm=lxm,lzm=lzm,wm=wm,rho0=rho0,p0=p0,mu0=mu0)
     return scale
 
