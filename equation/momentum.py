@@ -44,7 +44,7 @@ def vectgrad(func, x):
 
 def gov_eqn(net, x, scale):
     dmean, drange = scale[0:2]
-    x0, z0, w0 = drange[0:3]
+    x0, z0, w0, mu0 = drange[0:4]
     def grad1stOrder(net, x):
         grad, sol = vectgrad(net, x)
         # order should u w rho p mu
@@ -67,7 +67,7 @@ def gov_eqn(net, x, scale):
         term1_3 = p_x
 
         term2_2 = mu*w_z
-        term2_3 = x0*(p_z + rho)/z0
+        term2_3 = p_z + rho
 
         return jnp.hstack([term1_1,term12_21,term1_3,term2_2,term2_3])
 
@@ -76,10 +76,10 @@ def gov_eqn(net, x, scale):
     
     e1term1 = 2*grad_term[:, 0:1]/x0**2 # (term1_1,x)
     e1term2 = grad_term[:,3:4]/z0 # (term12_21,z)
-    e1term3 = term[:,2:3]
+    e1term3 = 910*9.81*z0*term[:,2:3]/(mu0*w0*x0)
     e2term1 = grad_term[:,2:3]/x0 # (term12_21,x)
     e2term2 = 2*grad_term[:,7:8]/z0**2
-    e2term3 = term[:,4:5]
+    e2term3 = 910*9.81*term[:,4:5]/(mu0*w0)
 
     e1 = e1term1 + e1term2 - e1term3
     e2 = e2term1 + e2term2 - e2term3

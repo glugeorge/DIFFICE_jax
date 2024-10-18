@@ -279,7 +279,9 @@ def normalize_data_momentum_synthetic(ds):
     rho_n = rho / 910
     p_n = p / (910*9.81*z_range)
     # normalize viscosity
-    mu_n = mu / ((910*9.81*z_range)/(x_range*w_range))
+    #mu_n = mu / ((910*9.81*z_range)/(x_range*w_range))
+    mu_scale = jnp.max(mu)
+    mu_n = mu/mu_scale
 
     # group the raw data
     data_raw = [x0, z0, u0, w0, rho0, p0, mu0]
@@ -292,7 +294,7 @@ def normalize_data_momentum_synthetic(ds):
 
     # group the mean and range info for each variable (shape = (3,))
     data_mean = jnp.hstack([x_mean, z_mean, w_mean])
-    data_range = jnp.hstack([x_range, z_range, w_range])
+    data_range = jnp.hstack([x_range, z_range, w_range, mu_scale])
 
     # gathering all the data information
     data_info = [data_mean, data_range, data_norm, data_raw, idxval_all, dsize_all]
