@@ -74,12 +74,12 @@ def gov_eqn(net, x, scale):
     func_g = lambda x: grad1stOrder(net, x)
     grad_term, term = vectgrad(func_g, x)
     
-    e1term1 = 2*grad_term[:, 0:1]/x0**2 # (term1_1,x)
-    e1term2 = grad_term[:,3:4]/z0 # (term12_21,z)
-    e1term3 = 910*9.81*z0*term[:,2:3]/(mu0*w0*x0)
-    e2term1 = grad_term[:,2:3]/x0 # (term12_21,x)
-    e2term2 = 2*grad_term[:,7:8]/z0**2
-    e2term3 = 910*9.81*term[:,4:5]/(mu0*w0)
+    e1term1 = 2*mu0*w0*grad_term[:, 0:1]/x0**2 # (term1_1,x)
+    e1term2 = mu0*w0*grad_term[:,3:4]/z0 # (term12_21,z)
+    e1term3 = 910*9.81*z0*term[:,2:3]/(x0)
+    e2term1 = mu0*w0*grad_term[:,2:3]/x0 # (term12_21,x)
+    e2term2 = 2*mu0*w0*grad_term[:,7:8]/z0**2
+    e2term3 = 910*9.81*term[:,4:5]
 
     e1 = e1term1 + e1term2 - e1term3
     e2 = e2term1 + e2term2 - e2term3

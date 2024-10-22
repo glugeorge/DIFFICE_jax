@@ -271,7 +271,7 @@ def predict_momentum_synthetic(func_all,data_all):
     mux_p = dataArrange(duwrhop_mu[:, 8:9], idxval, dsize) * varscl['mu0']/varscl['lx0']
     muz_p = dataArrange(duwrhop_mu[:, 9:10], idxval, dsize) * varscl['mu0']/varscl['lz0']
 
-    term0 = varscl['mu0']*varscl['w0'] # we divide through by this term
+    term0 = 1 #varscl['mu0']*varscl['w0'] # we divide through by this term
 
     # convert to 2D equation residue
     e1 = dataArrange(eqn[:, 0:1], idxval, dsize) * term0
