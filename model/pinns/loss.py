@@ -337,24 +337,28 @@ def loss_momentum_create_synthetic(predf, eqn_all, scale, lw):
         # load the position and weight of collocation points
         x_col = data['col']
 
-        x_div = data['bc_div']
-        x_bed = data['bc_bed']
+        #x_div = data['bc_div']
+        #x_bed = data['bc_bed']
+        x_bc = data['bc_flanks']
+        mu_bc = data['mu_flanks']
 
         # calculate the gradient of phi at origin
-        u_pred = net(x_smp)[:, 0:5] #  0:4 because we have data in u,w, rho, p
+        u_pred = net(x_smp)[:, 0:4] #  0:4 because we have data in u,w, rho, p
         
         # calculate the residue of equation
         f_pred, term = gov_eqn(net, x_col, scale)
-        f_bed = eqn_bc(net,x_bed)
-        f_div = eqn_bc(net,x_div)
+        #f_bed = eqn_bc(net,x_bed)
+        #f_div = eqn_bc(net,x_div)
+        mu_pred = eqn_bc(net,x_bc)
 
         # calculate the mean squared root error of normalization cond.
         data_err = ms_error(u_pred - u_smp)
 
         # calculate the mean squared root error of equation
         eqn_err = ms_error(f_pred)
-        div_err = ms_error(f_div)
-        bed_err = ms_error(f_bed)
+        bc_err = ms_error(mu_pred - mu_bc)
+        #div_err = ms_error(f_div)
+        #bed_err = ms_error(f_bed)
 
         # set weights for boundary conditions
         bd_weight = [1,1]
@@ -363,7 +367,7 @@ def loss_momentum_create_synthetic(predf, eqn_all, scale, lw):
         # calculate the overall data loss and equation loss
         loss_data = jnp.sum(data_err)
         loss_eqn = jnp.sum(eqn_err) 
-        loss_bd = 0#jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) 
+        loss_bd = bc_err#jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) 
 
         loss_ref = loss_fun.lref
         # calculate total loss
@@ -373,7 +377,7 @@ def loss_momentum_create_synthetic(predf, eqn_all, scale, lw):
         
         # group the loss of all conditions and equations
         loss_info = jnp.hstack([jnp.array([loss, loss_data, loss_eqn,loss_bd]),
-                                data_err, eqn_err,div_err,bed_err])
+                                data_err, eqn_err,bc_err])
         return loss, loss_info
 
     loss_fun.lref = 1.0

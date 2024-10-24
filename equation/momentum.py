@@ -89,6 +89,5 @@ def gov_eqn(net, x, scale):
 
 def eqn_bc(net,x):
     sol, vjp_fn = vjp(net, x)
-    u = sol[:,0:1]
-    e1 = u
-    return e1 
+    mu = sol[:,4:5]
+    return mu 
