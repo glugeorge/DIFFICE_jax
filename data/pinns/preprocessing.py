@@ -236,10 +236,10 @@ def normalize_data_momentum_synthetic(ds):
     #mu0 = muraw.flatten()
 
     # boundary conditions of bed and divide
-    x_bed0 = ds['x_bed'].values.flatten()
-    z_bed0 = ds['z_bed'].values.flatten()
-    x_div0 = ds['x_div'].values.flatten()
-    z_div0 = ds['z_div'].values.flatten()
+    #x_bed0 = ds['x_bed'].values.flatten()
+    #z_bed0 = ds['z_bed'].values.flatten()
+    #x_div0 = ds['x_div'].values.flatten()
+    #z_div0 = ds['z_div'].values.flatten()
 
     # mu bc
     x_flanks,z_flanks = np.meshgrid(ds['mu_flanks'].x.values,ds['mu_flanks'].z.values)
