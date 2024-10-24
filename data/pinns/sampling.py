@@ -108,7 +108,7 @@ def data_sample_create_momentum_synthetic(data_all, n_pt):
     U_star = data_all[1]
     
     # load the data at the boundaries
-    X_bc = data_all[2]
+    X_bc = data_all[2][0]
     mu_bc = data_all[3]
 
     # obtain the number of data points and points at the boundary

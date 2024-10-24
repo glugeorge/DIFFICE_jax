@@ -293,7 +293,7 @@ def normalize_data_momentum_synthetic(ds):
     p_n = p / (910*9.81*z_range)
     # normalize viscosity
     #mu_n = mu / ((910*9.81*z_range)/(x_range*w_range))
-    mu_scale = ds['mu_scale']
+    mu_scale = ds['mu_scale'].values
     mu_n = mu_flank/mu_scale
     
 

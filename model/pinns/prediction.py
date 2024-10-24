@@ -212,7 +212,7 @@ def predict_masscon(func_all,data_all):
 
 def predict_momentum_synthetic(func_all,data_all):
     # obtain the normalized dataset
-    x_star, z_star, u_star, w_star, rho_star, p_star, mu_star = data_all[-1][2]
+    x_star, z_star, u_star, w_star, rho_star, p_star = data_all[-1][2]
     # set the output position based on the original velocity data
     x_pred = jnp.hstack([x_star, z_star])
     # obtain the non-nan index of the original dataset

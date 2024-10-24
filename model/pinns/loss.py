@@ -367,7 +367,7 @@ def loss_momentum_create_synthetic(predf, eqn_all, scale, lw):
         # calculate the overall data loss and equation loss
         loss_data = jnp.sum(data_err)
         loss_eqn = jnp.sum(eqn_err) 
-        loss_bd = bc_err#jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) 
+        loss_bd = jnp.sum(bc_err)#jnp.sum(div_err*bd_weight[0]) + jnp.sum(bed_err*bd_weight[1]) 
 
         loss_ref = loss_fun.lref
         # calculate total loss
