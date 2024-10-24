@@ -275,10 +275,10 @@ def normalize_data_momentum_synthetic(ds):
     w_n = (w - w_mean) / w_range
 
     # boundaries
-    x_bed_n = (x_bed0.reshape((len(x_bed0),1)) - x_mean) / x_range
-    x_div_n = (x_div0.reshape((len(x_div0),1)) - x_mean) / x_range
-    z_bed_n = (z_bed0.reshape((len(z_bed0),1)) - z_mean) / z_range
-    z_div_n = (z_div0.reshape((len(z_div0),1)) - z_mean) / z_range
+    #x_bed_n = (x_bed0.reshape((len(x_bed0),1)) - x_mean) / x_range
+    #x_div_n = (x_div0.reshape((len(x_div0),1)) - x_mean) / x_range
+    #z_bed_n = (z_bed0.reshape((len(z_bed0),1)) - z_mean) / z_range
+    #z_div_n = (z_div0.reshape((len(z_div0),1)) - z_mean) / z_range
 
     x_flank_n = (x_flank0 - x_mean) / x_range
     z_flank_n = (z_flank0 - z_mean) / z_range
@@ -310,7 +310,7 @@ def normalize_data_momentum_synthetic(ds):
 
     # group the input and output into matrix
     X_star = [jnp.hstack((x_n, z_n))]
-    X_bc = [jnp.hstack((x_bed_n,z_bed_n)),jnp.hstack((x_div_n,z_div_n))]
+    #X_bc = [jnp.hstack((x_bed_n,z_bed_n)),jnp.hstack((x_div_n,z_div_n))]
     X_bc = [jnp.hstack((x_flank_n,z_flank_n))]
     #u_bc_n = [u_n_edge,h_n_edge,h_n_surf]
     
