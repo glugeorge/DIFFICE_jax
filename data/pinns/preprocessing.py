@@ -242,8 +242,9 @@ def normalize_data_momentum_synthetic(ds):
     z_div0 = ds['z_div'].values.flatten()
 
     # mu bc
-    x_flank0 = ds['x_flanks'].values.flatten()
-    z_flank0 = ds['z_flanks'].values.flatten()
+    x_flanks,z_flanks = np.meshgrid(ds['mu_flanks'].x.values,ds['mu_flanks'].z.values)
+    x_flank0 = x_flanks.flatten()
+    z_flank0 = z_flanks.flatten()
     mu_flanks0 = ds['mu_flanks'].values.flatten()
 
     # remove the nan value in the data
@@ -256,7 +257,11 @@ def normalize_data_momentum_synthetic(ds):
     p = p0[idxval_w, None]
     #mu = mu0[idxval_w, None]
 
-    # again, no BC with nans right now - with bed and div no nans
+    # remove nans from mu BC
+    idxval_mu = jnp.where(~np.isnan(mu_flanks0))[0]
+    x_flank = x_flank0[idxval_mu,None]
+    z_flank = z_flank0[idxval_mu,None]
+    mu_flank = mu_flanks0[idxval_mu,None]
 
     # calculate the mean and range of the domain
     x_mean = jnp.mean(x)
@@ -280,8 +285,8 @@ def normalize_data_momentum_synthetic(ds):
     #z_bed_n = (z_bed0.reshape((len(z_bed0),1)) - z_mean) / z_range
     #z_div_n = (z_div0.reshape((len(z_div0),1)) - z_mean) / z_range
 
-    x_flank_n = (x_flank0 - x_mean) / x_range
-    z_flank_n = (z_flank0 - z_mean) / z_range
+    x_flank_n = (x_flank - x_mean) / x_range
+    z_flank_n = (z_flank - z_mean) / z_range
 
     # normalize densities and pressures
     rho_n = rho / 910
@@ -289,7 +294,7 @@ def normalize_data_momentum_synthetic(ds):
     # normalize viscosity
     #mu_n = mu / ((910*9.81*z_range)/(x_range*w_range))
     mu_scale = ds['mu_scale']
-    mu_n = mu_flanks0/mu_scale
+    mu_n = mu_flank/mu_scale
     
 
     # group the raw data
